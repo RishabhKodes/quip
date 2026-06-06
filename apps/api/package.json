@@ -1,0 +1,30 @@
+{
+  "name": "@quip/api",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "fastify": "^5.3.3",
+    "@fastify/cors": "^11.0.1",
+    "@fastify/rate-limit": "^10.3.0",
+    "openai": "^5.4.0",
+    "@anthropic-ai/sdk": "^0.52.0",
+    "dotenv": "^16.5.0",
+    "zod": "^3.25.23",
+    "@quip/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3",
+    "@types/node": "^22.15.21",
+    "vitest": "^3.2.3"
+  }
+}
