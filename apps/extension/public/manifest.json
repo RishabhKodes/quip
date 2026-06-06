@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+  "name": "Quip - Quick Page AI",
+  "description": "Ask AI quick questions about selected text and webpage context.",
+  "version": "0.1.0",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "permissions": ["activeTab", "contextMenus", "scripting", "storage"],
+  "host_permissions": ["http://*/*", "https://*/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "commands": {
+    "open-quick-ask": {
+      "suggested_key": {
+        "default": "Ctrl+K",
+        "mac": "Command+K"
+      },
+      "description": "Ask AI about selected webpage text"
+    }
+  },
+  "options_page": "popup.html",
+  "action": {
+    "default_title": "Quip - Quick Page AI",
+    "default_popup": "popup.html"
+  }
+}
