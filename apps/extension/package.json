@@ -1,0 +1,25 @@
+{
+  "name": "@quip/extension",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm build && pnpm build:watch",
+    "build": "ENTRY=content vite build && ENTRY=background vite build --emptyOutDir false && ENTRY=popup vite build --emptyOutDir false && cp -r public/* dist/",
+    "build:watch": "ENTRY=content vite build --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "marked": "^15.0.7"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.309",
+    "@types/react": "^19.1.4",
+    "@types/react-dom": "^19.1.5",
+    "@vitejs/plugin-react": "^4.5.2",
+    "vite": "^6.3.5",
+    "typescript": "^5.8.3"
+  }
+}
