@@ -8,6 +8,7 @@ import {
   getStoredUsage,
   normalizeApiUrl,
   storeUsage,
+  validateApiUrl,
   type LlmProvider,
   type QuipSettings,
   type UsageStatus,
@@ -48,6 +49,8 @@ function Popup() {
   }
 
   async function refreshUsage(settingsToUse = settings) {
+    if (validateApiUrl(settingsToUse.apiUrl)) return;
+
     try {
       const clientId = await getOrCreateClientId();
       const headers: Record<string, string> = {
@@ -71,8 +74,9 @@ function Popup() {
   }
 
   function saveSettings() {
-    if (!settings.apiUrl.trim()) {
-      setError("Enter the URL of your Quip API.");
+    const apiUrlError = validateApiUrl(settings.apiUrl);
+    if (apiUrlError) {
+      setError(apiUrlError);
       return;
     }
     if (
@@ -121,10 +125,19 @@ function Popup() {
         currentWindow: true,
       });
       if (!tab?.id) throw new Error("No active page found.");
-      await chrome.tabs.sendMessage(tab.id, {
-        type: "OPEN_QUICK_ASK",
-        source: "action-button",
-      });
+      const message = {
+        type: "OPEN_QUICK_ASK" as const,
+        source: "action-button" as const,
+      };
+      try {
+        await chrome.tabs.sendMessage(tab.id, message);
+      } catch {
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          files: ["content.js"],
+        });
+        await chrome.tabs.sendMessage(tab.id, message);
+      }
       window.close();
     } catch {
       setError("Quip cannot open on this page. Try a regular website tab.");

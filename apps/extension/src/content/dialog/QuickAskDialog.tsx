@@ -8,6 +8,7 @@ import {
   getStoredUsage,
   normalizeApiUrl,
   storeUsage,
+  validateApiUrl,
   type QuipSettings,
   type UsageStatus,
 } from "../../shared/settings";
@@ -94,9 +95,14 @@ export function QuickAskDialog({
   }, [handleKeyDown]);
 
   function updateUsageFromResponse(response: Response): void {
-    const limit = Number(response.headers.get("x-quip-free-limit"));
-    const used = Number(response.headers.get("x-quip-free-used"));
-    const remaining = Number(response.headers.get("x-quip-free-remaining"));
+    const rawLimit = response.headers.get("x-quip-free-limit");
+    const rawUsed = response.headers.get("x-quip-free-used");
+    const rawRemaining = response.headers.get("x-quip-free-remaining");
+    if (rawLimit === null || rawUsed === null || rawRemaining === null) return;
+
+    const limit = Number(rawLimit);
+    const used = Number(rawUsed);
+    const remaining = Number(rawRemaining);
     if (![limit, used, remaining].every(Number.isFinite)) return;
 
     const nextUsage = { limit, used, remaining };
@@ -107,6 +113,12 @@ export function QuickAskDialog({
   async function ask(promptOverride?: string) {
     const prompt = (promptOverride ?? question).trim();
     if (!prompt || loading) return;
+
+    const apiUrlError = validateApiUrl(settings.apiUrl);
+    if (apiUrlError) {
+      setError(apiUrlError);
+      return;
+    }
 
     if (
       settings.useOwnKey &&
@@ -191,6 +203,7 @@ export function QuickAskDialog({
       const decoder = new TextDecoder();
       let buffer = "";
       let accumulated = "";
+      let streamError = "";
 
       const processEvent = (event: string) => {
         for (const line of event.split("\n")) {
@@ -202,6 +215,13 @@ export function QuickAskDialog({
             if (typeof parsed.text === "string") {
               accumulated += parsed.text;
               setStreamingAnswer(accumulated);
+            }
+            if (typeof parsed.error === "string") {
+              streamError = parsed.error;
+              if (parsed.usageStatus) {
+                setUsage(parsed.usageStatus);
+                storeUsage(parsed.usageStatus);
+              }
             }
           } catch {
             // Ignore malformed stream events and continue reading.
@@ -218,6 +238,7 @@ export function QuickAskDialog({
         if (done) break;
       }
       if (buffer.trim()) processEvent(buffer);
+      if (streamError) throw new Error(streamError);
 
       setConversation([
         ...history,
@@ -251,9 +272,13 @@ export function QuickAskDialog({
   }
 
   async function copyAnswer(content: string, index: number) {
-    await navigator.clipboard.writeText(content);
-    setCopiedMessage(index);
-    window.setTimeout(() => setCopiedMessage(null), 1400);
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopiedMessage(index);
+      window.setTimeout(() => setCopiedMessage(null), 1400);
+    } catch {
+      setError("Quip could not access the clipboard.");
+    }
   }
 
   function handleTextareaKeyDown(event: React.KeyboardEvent) {
