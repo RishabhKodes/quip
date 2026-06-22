@@ -1,15 +1,24 @@
 {
   "name": "quip",
   "private": true,
+  "description": "A browser extension for asking AI questions about selected text and webpage context.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RishabhKodes/quip.git"
+  },
   "scripts": {
     "dev:extension": "pnpm --filter @quip/extension dev",
     "dev:api": "pnpm --filter @quip/api dev",
     "build:extension": "pnpm --filter @quip/extension build",
     "build:api": "pnpm --filter @quip/api build",
+    "build": "pnpm build:extension && pnpm build:api",
+    "test": "pnpm --filter @quip/api test",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm -r typecheck",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.33.1",
