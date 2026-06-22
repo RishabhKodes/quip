@@ -56,7 +56,7 @@ describe("auth middleware", () => {
 
   it("always allows health endpoint regardless of auth", async () => {
     process.env.QUIP_API_KEY = "test-secret";
-    const res = await app.inject({ method: "GET", url: "/health" });
+    const res = await app.inject({ method: "GET", url: "/health?probe=true" });
     expect(res.statusCode).toBe(200);
   });
 });

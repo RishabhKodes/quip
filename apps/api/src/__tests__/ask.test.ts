@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import cors from "@fastify/cors";
 import Fastify from "fastify";
 import { askRoute } from "../routes/ask.js";
-import { callLLM } from "../services/llm/llmClient.js";
+import { callLLM, streamLLM } from "../services/llm/llmClient.js";
 import { MemoryFreeUsageStore } from "../services/usage/freeUsageStore.js";
 
 vi.mock("../services/llm/llmClient.js", () => ({
@@ -20,6 +21,7 @@ describe("/api/ask", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     app = Fastify();
+    await app.register(cors, { origin: true });
     await app.register(askRoute, {
       prefix: "/api",
       usageStore: new MemoryFreeUsageStore(),
@@ -86,6 +88,22 @@ describe("/api/ask", () => {
     expect(res.statusCode).toBe(400);
   });
 
+  it("rejects oversized nested page context", async () => {
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/ask",
+      headers: { "x-quip-client-id": clientId },
+      payload: {
+        question: "Hello",
+        pageContext: {
+          visibleText: "x".repeat(50001),
+        },
+      },
+    });
+
+    expect(res.statusCode).toBe(400);
+  });
+
   it("reports free usage for a client", async () => {
     const res = await app.inject({
       method: "GET",
@@ -147,6 +165,94 @@ describe("/api/ask", () => {
         apiKey: "user-secret",
       }),
     );
+
+    const usage = await app.inject({
+      method: "GET",
+      url: "/api/usage",
+      headers: { "x-quip-client-id": clientId },
+    });
+    expect(JSON.parse(usage.body).remaining).toBe(10);
+  });
+
+  it("does not consume free quota when the provider rejects a request", async () => {
+    vi.mocked(callLLM).mockRejectedValueOnce(new Error("provider failure"));
+
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/ask",
+      headers: { "x-quip-client-id": clientId },
+      payload: { question: "Will this fail?" },
+    });
+
+    expect(res.statusCode).toBe(502);
+    expect(JSON.parse(res.body)).toMatchObject({
+      code: "LLM_REQUEST_FAILED",
+      usageStatus: { remaining: 10 },
+    });
+  });
+
+  it("does not consume free quota when a stream fails to start", async () => {
+    vi.mocked(streamLLM).mockImplementationOnce(async function* () {
+      throw new Error("provider failure");
+    });
+
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/ask",
+      headers: { "x-quip-client-id": clientId },
+      payload: { question: "Stream this", stream: true },
+    });
+
+    expect(res.statusCode).toBe(502);
+    expect(JSON.parse(res.body)).toMatchObject({
+      code: "LLM_REQUEST_FAILED",
+      usageStatus: { remaining: 10 },
+    });
+  });
+
+  it("streams successful responses and records usage", async () => {
+    vi.mocked(streamLLM).mockImplementationOnce(async function* () {
+      yield "Hello";
+      yield " world";
+    });
+
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/ask",
+      headers: {
+        "x-quip-client-id": clientId,
+        origin: "https://example.com",
+      },
+      payload: { question: "Stream this", stream: true },
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.headers["content-type"]).toContain("text/event-stream");
+    expect(res.headers["access-control-allow-origin"]).toBe(
+      "https://example.com",
+    );
+    expect(res.headers["x-quip-free-remaining"]).toBe("9");
+    expect(res.body).toContain('data: {"text":"Hello"}');
+    expect(res.body).toContain('data: {"text":" world"}');
+    expect(res.body).toContain("data: [DONE]");
+  });
+
+  it("releases quota when an active stream is interrupted", async () => {
+    vi.mocked(streamLLM).mockImplementationOnce(async function* () {
+      yield "Partial";
+      throw new Error("stream failure");
+    });
+
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/ask",
+      headers: { "x-quip-client-id": clientId },
+      payload: { question: "Stream this", stream: true },
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toContain('"code":"LLM_STREAM_FAILED"');
+    expect(res.body).toContain('"remaining":10');
 
     const usage = await app.inject({
       method: "GET",
