@@ -7,8 +7,8 @@ import {
 import type { OpenQuickAskMessage } from "@shared/protocol";
 import { getStoredSettings } from "../shared/settings";
 
-chrome.runtime.onMessage.addListener((message: OpenQuickAskMessage) => {
-  if (message.type !== "OPEN_QUICK_ASK") return;
+chrome.runtime.onMessage.addListener((message: unknown) => {
+  if (!isOpenQuickAskMessage(message)) return;
 
   getStoredSettings().then((settings) => {
     const hostname = window.location.hostname;
@@ -43,3 +43,16 @@ chrome.runtime.onMessage.addListener((message: OpenQuickAskMessage) => {
     });
   });
 });
+
+function isOpenQuickAskMessage(
+  message: unknown,
+): message is OpenQuickAskMessage {
+  if (!message || typeof message !== "object") return false;
+  const candidate = message as Partial<OpenQuickAskMessage>;
+  return (
+    candidate.type === "OPEN_QUICK_ASK" &&
+    (candidate.source === "keyboard" ||
+      candidate.source === "context-menu" ||
+      candidate.source === "action-button")
+  );
+}
