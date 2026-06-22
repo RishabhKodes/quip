@@ -1,9 +1,7 @@
 import type { PageContextPayload } from "@shared/protocol";
 import { LIMITS } from "@shared/limits";
 
-export function extractDocs(
-  selectedText: string,
-): Partial<PageContextPayload> {
+export function extractDocs(selectedText: string): Partial<PageContextPayload> {
   const headings = extractHeadingHierarchy();
   const currentSection = extractCurrentSection(selectedText);
   const codeBlocks = extractCodeBlocks();
@@ -25,9 +23,7 @@ export function extractDocs(
 }
 
 function extractHeadingHierarchy(): string[] {
-  const allHeadings = document.querySelectorAll(
-    "h1, h2, h3, h4",
-  );
+  const allHeadings = document.querySelectorAll("h1, h2, h3, h4");
   return Array.from(allHeadings)
     .map((h) => {
       const level = parseInt(h.tagName[1]);
@@ -42,10 +38,13 @@ function extractCurrentSection(selectedText: string): string {
   if (!selectedText) return "";
 
   const main =
-    document.querySelector("article, main, [role='main'], .markdown-body, .content") ||
-    document.body;
+    document.querySelector(
+      "article, main, [role='main'], .markdown-body, .content",
+    ) || document.body;
 
-  const allElements = main.querySelectorAll("h1, h2, h3, h4, p, li, pre, td, blockquote");
+  const allElements = main.querySelectorAll(
+    "h1, h2, h3, h4, p, li, pre, td, blockquote",
+  );
   let matchIndex = -1;
 
   for (let i = 0; i < allElements.length; i++) {

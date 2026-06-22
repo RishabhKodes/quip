@@ -4,7 +4,6 @@ import { LIMITS } from "@shared/limits";
 export function extractGitHub(
   selectedText: string,
 ): Partial<PageContextPayload> {
-  const url = window.location.href;
   const pathParts = window.location.pathname.split("/").filter(Boolean);
   const repo = pathParts.length >= 2 ? `${pathParts[0]}/${pathParts[1]}` : "";
 
@@ -49,7 +48,9 @@ export function extractGitHub(
 }
 
 function extractCodeFromBlob(): string {
-  const codeTable = document.querySelector(".js-file-line-container, .react-code-lines");
+  const codeTable = document.querySelector(
+    ".js-file-line-container, .react-code-lines",
+  );
   if (!codeTable) return "";
   return (codeTable.textContent || "").trim().slice(0, 8000);
 }

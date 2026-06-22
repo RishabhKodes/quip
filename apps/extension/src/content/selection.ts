@@ -14,5 +14,8 @@ export function getSelectionPosition(): { top: number; left: number } | null {
   const range = getSelectionRange();
   if (!range) return null;
   const rect = range.getBoundingClientRect();
-  return { top: rect.bottom + window.scrollY, left: rect.left + window.scrollX };
+  return {
+    top: rect.bottom + window.scrollY,
+    left: rect.left + window.scrollX,
+  };
 }

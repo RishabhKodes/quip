@@ -5,11 +5,13 @@ export function extractStackOverflow(
   selectedText: string,
 ): Partial<PageContextPayload> {
   const questionTitle =
-    document.querySelector("#question-header h1, .question-hyperlink")
+    document
+      .querySelector("#question-header h1, .question-hyperlink")
       ?.textContent?.trim() || "";
 
   const questionBody =
-    document.querySelector(".question .s-prose, .question .post-text")
+    document
+      .querySelector(".question .s-prose, .question .post-text")
       ?.textContent?.trim()
       ?.slice(0, 4000) || "";
 
