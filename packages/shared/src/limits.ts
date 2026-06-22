@@ -1,7 +1,17 @@
 export const LIMITS = {
+  questionChars: 2000,
   selectedTextChars: 12000,
   nearbyTextChars: 10000,
   visibleTextChars: 50000,
+  pageTitleChars: 500,
+  pageUrlChars: 2048,
   headingsCount: 40,
+  headingChars: 500,
+  metadataEntries: 50,
+  metadataValueChars: 1000,
+  conversationMessages: 20,
+  conversationMessageChars: 12000,
+  modelIdChars: 200,
+  apiKeyChars: 500,
   finalPromptChars: 70000,
-};
+} as const;
