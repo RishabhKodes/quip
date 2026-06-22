@@ -55,6 +55,9 @@ export default defineConfig({
     },
   },
   define: {
+    __QUIP_DEFAULT_API_URL__: JSON.stringify(
+      process.env.QUIP_DEFAULT_API_URL || "http://localhost:3000",
+    ),
     "process.env.NODE_ENV": JSON.stringify(
       process.env.NODE_ENV || "development",
     ),
