@@ -236,7 +236,9 @@ function Popup() {
               </span>
               <span>
                 <strong>Quip Free</strong>
-                <small>10 included requests</small>
+                <small>
+                  {usage.limit} included request{usage.limit === 1 ? "" : "s"}
+                </small>
               </span>
             </button>
             <button

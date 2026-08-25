@@ -144,6 +144,36 @@ describe("/api/ask", () => {
     });
   });
 
+  it("reports the configured free-request limit when quota is exhausted", async () => {
+    const limitedApp = Fastify();
+    await limitedApp.register(askRoute, {
+      prefix: "/api",
+      usageStore: new MemoryFreeUsageStore(1),
+    });
+    await limitedApp.ready();
+
+    await limitedApp.inject({
+      method: "POST",
+      url: "/api/ask",
+      headers: { "x-quip-client-id": clientId },
+      payload: { question: "Question 1" },
+    });
+    const blocked = await limitedApp.inject({
+      method: "POST",
+      url: "/api/ask",
+      headers: { "x-quip-client-id": clientId },
+      payload: { question: "Question 2" },
+    });
+
+    expect(blocked.statusCode).toBe(402);
+    expect(JSON.parse(blocked.body)).toMatchObject({
+      error: expect.stringContaining("all 1 free request"),
+      usageStatus: { limit: 1, used: 1, remaining: 0 },
+    });
+
+    await limitedApp.close();
+  });
+
   it("forwards BYOK provider settings without using free quota", async () => {
     const res = await app.inject({
       method: "POST",

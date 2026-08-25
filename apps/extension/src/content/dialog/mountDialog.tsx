@@ -5,6 +5,8 @@ import { getDialogStyles } from "./styles";
 import type { PageContextPayload } from "@shared/protocol";
 
 const HOST_ID = "quip-ai-root";
+let mountedRoot: ReturnType<typeof createRoot> | null = null;
+let mountedHost: HTMLElement | null = null;
 
 interface MountProps {
   selectedText: string;
@@ -12,10 +14,7 @@ interface MountProps {
 }
 
 export function mountQuickAskDialog(props: MountProps) {
-  const existing = document.getElementById(HOST_ID);
-  if (existing) {
-    existing.remove();
-  }
+  unmountQuickAskDialog();
 
   const host = document.createElement("div");
   host.id = HOST_ID;
@@ -39,10 +38,11 @@ export function mountQuickAskDialog(props: MountProps) {
   shadow.appendChild(app);
 
   const root = createRoot(app);
+  mountedRoot = root;
+  mountedHost = host;
 
   function handleClose() {
-    root.unmount();
-    host.remove();
+    unmountQuickAskDialog();
   }
 
   root.render(
@@ -55,6 +55,14 @@ export function mountQuickAskDialog(props: MountProps) {
 }
 
 export function unmountQuickAskDialog() {
-  const existing = document.getElementById(HOST_ID);
-  if (existing) existing.remove();
+  const root = mountedRoot;
+  const host = mountedHost;
+  mountedRoot = null;
+  mountedHost = null;
+
+  root?.unmount();
+  host?.remove();
+
+  const untrackedHost = document.getElementById(HOST_ID);
+  if (untrackedHost) untrackedHost.remove();
 }

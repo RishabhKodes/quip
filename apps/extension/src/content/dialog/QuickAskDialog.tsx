@@ -61,6 +61,34 @@ export function QuickAskDialog({
       ([storedSettings, storedUsage]) => {
         setSettings(storedSettings);
         setUsage(storedUsage);
+
+        if (storedSettings.useOwnKey) return;
+
+        getOrCreateClientId().then((clientId) => {
+          const apiUrlError = validateApiUrl(storedSettings.apiUrl);
+          if (apiUrlError) return;
+
+          const headers: Record<string, string> = {
+            "x-quip-client-id": clientId,
+          };
+          if (storedSettings.quipApiKey.trim()) {
+            headers["x-quip-api-key"] = storedSettings.quipApiKey.trim();
+          }
+
+          fetch(`${normalizeApiUrl(storedSettings.apiUrl)}/usage`, { headers })
+            .then((res) => (res.ok ? res.json() : null))
+            .then((serverUsage) => {
+              if (!serverUsage) return;
+              const synced = {
+                limit: serverUsage.limit,
+                used: serverUsage.used,
+                remaining: serverUsage.remaining,
+              };
+              setUsage(synced);
+              storeUsage(synced);
+            })
+            .catch(() => {});
+        });
       },
     );
     textareaRef.current?.focus();
@@ -130,7 +158,7 @@ export function QuickAskDialog({
 
     if (!settings.useOwnKey && usage.remaining === 0) {
       setError(
-        "Your 10 free requests are complete. Add your own API key to keep asking.",
+        `Your ${usage.limit} free request${usage.limit === 1 ? "" : "s"} ${usage.limit === 1 ? "is" : "are"} complete. Add your own API key to keep asking.`,
       );
       return;
     }
@@ -585,7 +613,10 @@ export function QuickAskDialog({
           {isQuotaExhausted && (
             <div className="quip-quota-gate">
               <div>
-                <strong>You’ve used your 10 free requests</strong>
+                <strong>
+                  You’ve used your {usage.limit} free request
+                  {usage.limit === 1 ? "" : "s"}
+                </strong>
                 <span>
                   Connect your own model to continue without a Quip limit.
                 </span>

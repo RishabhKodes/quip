@@ -138,10 +138,10 @@ export async function askRoute(
       const usage = usageStore.reserve(parsedClientId.data);
       if (!usage) {
         const currentUsage = usageStore.get(parsedClientId.data);
+        const requestLabel = currentUsage.limit === 1 ? "request" : "requests";
         setUsageHeaders(reply, currentUsage);
         return reply.code(402).send({
-          error:
-            "You have used all 10 free requests. Add your API key and model in Quip settings to continue.",
+          error: `You have used all ${currentUsage.limit} free ${requestLabel}. Add your API key and model in Quip settings to continue.`,
           code: "FREE_LIMIT_REACHED",
           usageStatus: currentUsage,
         });
