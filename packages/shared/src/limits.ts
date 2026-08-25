@@ -13,6 +13,8 @@ export const LIMITS = {
   pageChunkChars: 1200,
   pageChunkHeadingChars: 500,
   pageChunksTotalChars: 210000,
+  extractedPageChunksCount: 500,
+  extractedPageChunksTotalChars: 850000,
   relevantPageChunks: 12,
   relevantPageContextChars: 30000,
   metadataContextChars: 5000,

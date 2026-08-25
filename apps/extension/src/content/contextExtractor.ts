@@ -152,7 +152,7 @@ function normalizeForComparison(text: string): string {
 function sampleChunks(chunks: PageContextChunk[]): PageContextChunk[] {
   if (chunks.length === 0) return [];
 
-  const count = Math.min(chunks.length, LIMITS.pageChunksCount);
+  const count = Math.min(chunks.length, LIMITS.extractedPageChunksCount);
   const sampled = new Map<number, PageContextChunk>();
   for (let slot = 0; slot < count; slot += 1) {
     const index =
@@ -164,7 +164,7 @@ function sampleChunks(chunks: PageContextChunk[]): PageContextChunk[] {
   let totalChars = 0;
   for (const chunk of sampled.values()) {
     const chunkChars = chunk.text.length + (chunk.heading?.length || 0);
-    if (totalChars + chunkChars > LIMITS.pageChunksTotalChars) break;
+    if (totalChars + chunkChars > LIMITS.extractedPageChunksTotalChars) break;
     result.push(chunk);
     totalChars += chunkChars;
   }
