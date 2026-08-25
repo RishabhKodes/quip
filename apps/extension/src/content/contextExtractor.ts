@@ -17,6 +17,7 @@ export function extractPageContext(input: {
       title,
       url,
       selectedText: input.selectedText.slice(0, LIMITS.selectedTextChars),
+      visibleText: adapterContext.visibleText || extractVisibleText(),
     };
   }
 

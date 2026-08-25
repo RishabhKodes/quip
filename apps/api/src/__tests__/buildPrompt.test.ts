@@ -90,11 +90,27 @@ describe("buildMessages", () => {
 
     expect(system.content).not.toContain("Dev Docs");
     expect(system.content).not.toContain("some code");
-    expect(system.content).toContain("untrusted data");
+    expect(system.content).toContain("data from a website");
     expect(user.content).toContain("<page_context>");
     expect(user.content).toContain("Dev Docs");
     expect(user.content).toContain("some code");
     expect(user.content).toContain("Question: What is this?");
+  });
+
+  it("includes metadata in the user message", () => {
+    const messages = buildMessages({
+      question: "Explain this PR",
+      selectedText: "",
+      pageTitle: "Fix auth bug",
+      pageUrl: "https://github.com/org/repo/pull/42",
+      pageContext: {
+        metadata: { repo: "org/repo", prNumber: "42" },
+      },
+    });
+
+    const user = messages[messages.length - 1];
+    expect(user.content).toContain("repo: org/repo");
+    expect(user.content).toContain("prNumber: 42");
   });
 
   it("labels page instructions as untrusted reference data", () => {

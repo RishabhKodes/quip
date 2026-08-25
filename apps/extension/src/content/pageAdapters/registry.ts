@@ -18,7 +18,11 @@ export function detectAdapter(url: string): AdapterName {
     return "github";
   }
 
-  if (hostname === "stackoverflow.com" || hostname === "stackexchange.com") {
+  if (
+    hostname === "stackoverflow.com" ||
+    hostname === "stackexchange.com" ||
+    hostname.endsWith(".stackexchange.com")
+  ) {
     return "stackoverflow";
   }
 
