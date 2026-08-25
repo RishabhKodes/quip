@@ -18,6 +18,12 @@ export type AskAIRequest = {
   pageContext: PageContextPayload;
 };
 
+export type PageContextChunk = {
+  kind: "heading" | "paragraph" | "list" | "code" | "table" | "quote";
+  text: string;
+  heading?: string;
+};
+
 export type PageContextPayload = {
   title: string;
   url: string;
@@ -26,6 +32,7 @@ export type PageContextPayload = {
   visibleText?: string;
   headings?: string[];
   metadata?: Record<string, string>;
+  chunks?: PageContextChunk[];
   adapter?: string;
 };
 
