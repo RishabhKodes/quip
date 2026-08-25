@@ -104,6 +104,25 @@ describe("/api/ask", () => {
     expect(res.statusCode).toBe(400);
   });
 
+  it("rejects too many structured page chunks", async () => {
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/ask",
+      headers: { "x-quip-client-id": clientId },
+      payload: {
+        question: "Hello",
+        pageContext: {
+          chunks: Array.from({ length: 121 }, () => ({
+            kind: "paragraph",
+            text: "Page content",
+          })),
+        },
+      },
+    });
+
+    expect(res.statusCode).toBe(400);
+  });
+
   it("reports free usage for a client", async () => {
     const res = await app.inject({
       method: "GET",

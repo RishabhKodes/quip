@@ -36,6 +36,32 @@ const askSchema = z.object({
           `Metadata cannot contain more than ${LIMITS.metadataEntries} entries.`,
         )
         .optional(),
+      chunks: z
+        .array(
+          z.object({
+            kind: z.enum([
+              "heading",
+              "paragraph",
+              "list",
+              "code",
+              "table",
+              "quote",
+            ]),
+            text: z.string().trim().min(1).max(LIMITS.pageChunkChars),
+            heading: z.string().max(LIMITS.pageChunkHeadingChars).optional(),
+          }),
+        )
+        .max(LIMITS.pageChunksCount)
+        .refine(
+          (chunks) =>
+            chunks.reduce(
+              (total, chunk) =>
+                total + chunk.text.length + (chunk.heading?.length || 0),
+              0,
+            ) <= LIMITS.pageChunksTotalChars,
+          `Page chunks cannot exceed ${LIMITS.pageChunksTotalChars} total characters.`,
+        )
+        .optional(),
       adapter: z.string().max(100).optional(),
     })
     .default({}),
