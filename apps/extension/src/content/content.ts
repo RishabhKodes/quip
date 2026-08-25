@@ -34,6 +34,7 @@ chrome.runtime.onMessage.addListener((message: unknown) => {
             nearbyText: undefined,
             visibleText: undefined,
             headings: undefined,
+            chunks: undefined,
           }
         : extractedContext;
 

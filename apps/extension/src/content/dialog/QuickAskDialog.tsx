@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { PageContextPayload } from "@shared/protocol";
+import { selectRelevantPageChunks } from "@shared/contextRanking";
+import type { PageContextChunk, PageContextPayload } from "@shared/protocol";
 import {
   DEFAULT_SETTINGS,
   DEFAULT_USAGE,
@@ -51,6 +52,9 @@ export function QuickAskDialog({
   const [showContext, setShowContext] = useState(false);
   const [showSelection, setShowSelection] = useState(false);
   const [copiedMessage, setCopiedMessage] = useState<number | null>(null);
+  const [lastSentChunks, setLastSentChunks] = useState<
+    PageContextChunk[] | null
+  >(null);
   const [settings, setSettings] = useState<QuipSettings>(DEFAULT_SETTINGS);
   const [usage, setUsage] = useState<UsageStatus>(DEFAULT_USAGE);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -164,11 +168,22 @@ export function QuickAskDialog({
     }
 
     const history = conversation;
+    const requestChunks = selectRelevantPageChunks(
+      initialContext.chunks || [],
+      prompt,
+      selectedText,
+      initialContext.nearbyText,
+    );
+    const requestContext = {
+      ...initialContext,
+      chunks: requestChunks,
+    };
     setLoading(true);
     setError("");
     setCurrentPrompt(prompt);
     setStreamingAnswer("");
     setQuestion("");
+    setLastSentChunks(requestChunks);
 
     try {
       const clientId = await getOrCreateClientId();
@@ -194,7 +209,7 @@ export function QuickAskDialog({
           selectedText,
           pageTitle: initialContext.title,
           pageUrl: initialContext.url,
-          pageContext: initialContext,
+          pageContext: requestContext,
           stream: true,
           conversationHistory: history,
         }),
@@ -296,6 +311,7 @@ export function QuickAskDialog({
     setStreamingAnswer("");
     setQuestion("");
     setError("");
+    setLastSentChunks(null);
     textareaRef.current?.focus();
   }
 
@@ -330,6 +346,16 @@ export function QuickAskDialog({
   const isQuotaExhausted = !settings.useOwnKey && usage.remaining === 0;
   const providerLabel = settings.provider === "openai" ? "OpenAI" : "Anthropic";
   const pageLabel = initialContext.title || getHostname(initialContext.url);
+  const contextPreviewChunks =
+    lastSentChunks === null ? initialContext.chunks || [] : lastSentChunks;
+  const contextPreviewLabel =
+    lastSentChunks === null
+      ? "Extracted page sections"
+      : "Sections sent for the latest question";
+  const previewContext = {
+    ...initialContext,
+    chunks: contextPreviewChunks,
+  };
 
   return (
     <div className="quip-overlay" onMouseDown={onClose}>
@@ -447,10 +473,9 @@ export function QuickAskDialog({
                   <strong>{initialContext.adapter || "Web page"}</strong>
                 </div>
                 <div>
-                  <span>Page content</span>
+                  <span>Extracted sections</span>
                   <strong>
-                    {(initialContext.visibleText?.length || 0).toLocaleString()}{" "}
-                    chars
+                    {(initialContext.chunks?.length || 0).toLocaleString()}
                   </strong>
                 </div>
                 <div>
@@ -460,6 +485,38 @@ export function QuickAskDialog({
                     chars
                   </strong>
                 </div>
+                <div>
+                  <span>Fallback text</span>
+                  <strong>
+                    {(initialContext.visibleText?.length || 0).toLocaleString()}{" "}
+                    chars
+                  </strong>
+                </div>
+              </div>
+            )}
+            {showContext && (
+              <div className="quip-context-preview">
+                <span className="quip-eyebrow">{contextPreviewLabel}</span>
+                {contextPreviewChunks.length > 0 ? (
+                  contextPreviewChunks.map((chunk, index) => (
+                    <article key={`${chunk.kind}-${index}`}>
+                      <strong>
+                        {chunk.kind}
+                        {chunk.heading ? ` · ${chunk.heading}` : ""}
+                      </strong>
+                      <p>{chunk.text}</p>
+                    </article>
+                  ))
+                ) : (
+                  <p className="quip-context-empty">
+                    No structured sections were available; Quip will use the
+                    fallback page text.
+                  </p>
+                )}
+                <details className="quip-context-payload">
+                  <summary>View raw context payload</summary>
+                  <pre>{JSON.stringify(previewContext, null, 2)}</pre>
+                </details>
               </div>
             )}
           </div>

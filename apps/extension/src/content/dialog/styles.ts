@@ -320,7 +320,7 @@ export function getDialogStyles(): string {
       display: grid;
       flex: 0 0 auto;
       gap: 12px;
-      max-height: 190px;
+      max-height: 280px;
       overflow-y: auto;
       padding: 12px 18px 14px;
       border-bottom: 1px solid var(--border);
@@ -350,7 +350,7 @@ export function getDialogStyles(): string {
 
     .quip-context-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 8px;
     }
 
@@ -368,6 +368,61 @@ export function getDialogStyles(): string {
       color: var(--text-soft);
       font-size: 11px;
       font-weight: 550;
+    }
+
+    .quip-context-preview {
+      display: grid;
+      gap: 8px;
+    }
+
+    .quip-context-preview article {
+      padding: 9px 10px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: rgba(255,255,255,.025);
+    }
+
+    .quip-context-preview article strong {
+      color: #a78bfa;
+      font-size: 9px;
+      font-weight: 650;
+      text-transform: capitalize;
+    }
+
+    .quip-context-preview article p,
+    .quip-context-empty {
+      margin: 5px 0 0;
+      color: #aaa4b1;
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 9px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+    }
+
+    .quip-context-payload {
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: rgba(255,255,255,.02);
+    }
+
+    .quip-context-payload summary {
+      padding: 8px 10px;
+      color: #8f8997;
+      cursor: pointer;
+      font-size: 9px;
+    }
+
+    .quip-context-payload pre {
+      max-height: 180px;
+      margin: 0;
+      overflow: auto;
+      padding: 0 10px 10px;
+      color: #aaa4b1;
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 8px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
     }
 
     .quip-chat {
