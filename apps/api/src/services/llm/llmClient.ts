@@ -12,7 +12,7 @@ export interface LlmRequestConfig {
 }
 
 function getProvider(config?: LlmRequestConfig): LlmProvider {
-  const provider = config?.provider || process.env.LLM_PROVIDER || "anthropic";
+  const provider = config?.provider || process.env.LLM_PROVIDER || "openai";
   if (provider === "openai" || provider === "anthropic") return provider;
   throw new Error(`Unsupported LLM provider: ${provider}`);
 }
