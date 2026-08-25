@@ -1,8 +1,9 @@
-import { LIMITS, type PageContextChunk } from "@quip/shared";
 import {
   formatPageChunks,
+  LIMITS,
   selectRelevantPageChunks,
-} from "./rankPageContext.js";
+  type PageContextChunk,
+} from "@quip/shared";
 
 export interface ChatMessage {
   role: "system" | "user" | "assistant";

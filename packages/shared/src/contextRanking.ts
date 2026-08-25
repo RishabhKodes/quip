@@ -1,6 +1,7 @@
-import { LIMITS, type PageContextChunk } from "@quip/shared";
+import { LIMITS } from "./limits.js";
+import type { PageContextChunk } from "./protocol.js";
 
-const STOP_WORDS = new Set([
+const IGNORED_QUERY_TERMS = new Set([
   "about",
   "also",
   "and",
@@ -55,7 +56,9 @@ export function selectRelevantPageChunks(
     return removeDuplicateChunks(chunks, selectedText, nearbyText);
   }
 
-  const queryTerms = tokenize(question).filter((term) => !STOP_WORDS.has(term));
+  const queryTerms = tokenize(question).filter(
+    (term) => !IGNORED_QUERY_TERMS.has(term),
+  );
   const selectedNeedle = normalizeText(selectedText).slice(0, 200);
   const scored = chunks.map((chunk, index) => ({
     index,
