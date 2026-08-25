@@ -76,6 +76,76 @@ describe("buildMessages", () => {
     expect(allContent(messages)).toContain("Visible page content here");
   });
 
+  it("selects a relevant structured section from late in a long page", () => {
+    const chunks = Array.from({ length: 30 }, (_, index) => ({
+      kind: "paragraph" as const,
+      text: `Generic product information section ${index}`,
+      heading: `Section ${index}`,
+    }));
+    chunks[28] = {
+      kind: "paragraph",
+      text: "Rotate authentication credentials after changing access roles.",
+      heading: "Authentication recovery",
+    };
+
+    const messages = buildMessages({
+      question: "How should authentication credentials be rotated?",
+      selectedText: "",
+      pageTitle: "Operations guide",
+      pageUrl: "https://example.com/guide",
+      pageContext: {
+        chunks,
+        visibleText: "Noisy navigation that should not be used",
+      },
+    });
+
+    const user = messages[messages.length - 1].content;
+    expect(user).toContain("Authentication recovery");
+    expect(user).toContain("Rotate authentication credentials");
+    expect(user).not.toContain("Noisy navigation");
+  });
+
+  it("samples structured sections across the page for broad questions", () => {
+    const chunks = Array.from({ length: 40 }, (_, index) => ({
+      kind: "paragraph" as const,
+      text: `Distinct page section ${index}`,
+    }));
+
+    const messages = buildMessages({
+      question: "Summarize this page",
+      selectedText: "",
+      pageTitle: "Long page",
+      pageUrl: "https://example.com/long",
+      pageContext: { chunks },
+    });
+
+    const user = messages[messages.length - 1].content;
+    expect(user).toContain("Distinct page section 0");
+    expect(user).toContain("Distinct page section 39");
+    expect(user.match(/Distinct page section/g) || []).toHaveLength(12);
+  });
+
+  it("does not duplicate selected text inside structured sections", () => {
+    const selectedText =
+      "This selected sentence is long enough to identify its page section.";
+    const messages = buildMessages({
+      question: "Explain the selection",
+      selectedText,
+      pageTitle: "Example",
+      pageUrl: "https://example.com",
+      pageContext: {
+        chunks: [
+          { kind: "paragraph", text: selectedText },
+          { kind: "paragraph", text: "Additional supporting explanation." },
+        ],
+      },
+    });
+
+    const user = messages[messages.length - 1].content;
+    expect(user.match(new RegExp(selectedText, "g"))).toHaveLength(1);
+    expect(user).toContain("Additional supporting explanation");
+  });
+
   it("keeps untrusted page context out of the system message", () => {
     const messages = buildMessages({
       question: "What is this?",
