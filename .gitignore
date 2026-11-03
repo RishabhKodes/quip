@@ -10,3 +10,23 @@ coverage/
 .idea/
 .vscode/
 .claude/
+
+# Local package caches and machine-specific agent/cloud configuration
+.pnpm-store/
+.codex/
+.agents/
+.aws/
+.azure/
+.gcloud/
+.envrc
+
+# Private keys, credential exports, and local audit reports
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+credentials.json
+credentials.*.json
+service-account*.json
+.gitleaks-report*

@@ -6,10 +6,11 @@
    keyboard shortcut or context-menu action.
 2. The content script extracts bounded page context using a site adapter or the
    base extractor.
-3. The dialog reads extension-local settings and sends a request to the
-   configured Quip API.
+3. The dialog reads extension-local settings and asks the background service
+   worker to contact the configured Quip API. Keeping network access in the
+   extension context avoids host-page CORS and mixed-content restrictions.
 4. The API validates and bounds the payload, builds an injection-resistant
-   prompt, and calls OpenAI or Anthropic.
+   prompt, and calls OpenAI, Anthropic, or a loopback OpenAI-compatible model.
 5. The answer streams back as server-sent events and is rendered through a
    restricted Markdown allowlist.
 
@@ -19,9 +20,7 @@
 - Provider API keys are secrets. Server keys remain in environment variables;
   user-provided keys remain in extension-local storage and transit the API only
   for the current request.
-- The extension installation ID is a quota identifier, not authentication.
 - `CORS_ORIGINS` controls browser access but does not replace authentication.
-- The file usage store is suitable only for a single process.
 
 ## Packages
 
@@ -33,7 +32,8 @@ mounted into a Shadow DOM to isolate it from host-page styles.
 ### `apps/api`
 
 Fastify API with request validation, optional shared-secret authentication,
-rate limiting, usage accounting, and OpenAI/Anthropic adapters.
+rate limiting and cloud or local model adapters. No Quip plans, installation
+identifiers, or request-quota storage are used.
 
 ### `packages/shared`
 

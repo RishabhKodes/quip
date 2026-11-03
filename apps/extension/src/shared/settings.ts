@@ -1,39 +1,28 @@
-import { DEFAULT_API_URL, FREE_REQUEST_LIMIT, STORAGE_KEYS } from "./constants";
+import { DEFAULT_API_URL, STORAGE_KEYS } from "./constants";
+import { DEFAULT_LOCAL_BASE_URL, type LlmProvider } from "@shared/models";
 
-export type LlmProvider = "openai" | "anthropic";
+export type { LlmProvider } from "@shared/models";
 
 export interface QuipSettings {
   apiUrl: string;
   quipApiKey: string;
   contextMode: "full" | "selected-only";
-  blockedDomains: string[];
   useOwnKey: boolean;
   provider: LlmProvider;
   model: string;
   llmApiKey: string;
-}
-
-export interface UsageStatus {
-  limit: number;
-  used: number;
-  remaining: number;
+  localBaseUrl: string;
 }
 
 export const DEFAULT_SETTINGS: QuipSettings = {
   apiUrl: DEFAULT_API_URL,
   quipApiKey: "",
   contextMode: "full",
-  blockedDomains: [],
-  useOwnKey: false,
+  useOwnKey: true,
   provider: "openai",
   model: "",
   llmApiKey: "",
-};
-
-export const DEFAULT_USAGE: UsageStatus = {
-  limit: FREE_REQUEST_LIMIT,
-  used: 0,
-  remaining: FREE_REQUEST_LIMIT,
+  localBaseUrl: DEFAULT_LOCAL_BASE_URL,
 };
 
 export function getStoredSettings(): Promise<QuipSettings> {
@@ -50,50 +39,6 @@ export function getStoredSettings(): Promise<QuipSettings> {
       });
     });
   });
-}
-
-export function getOrCreateClientId(): Promise<string> {
-  return new Promise((resolve) => {
-    if (typeof chrome === "undefined" || !chrome.storage?.local) {
-      resolve(crypto.randomUUID());
-      return;
-    }
-
-    chrome.storage.local.get(STORAGE_KEYS.clientId, (result) => {
-      const existing = result[STORAGE_KEYS.clientId];
-      if (typeof existing === "string" && existing) {
-        resolve(existing);
-        return;
-      }
-
-      const clientId = crypto.randomUUID();
-      chrome.storage.local.set({ [STORAGE_KEYS.clientId]: clientId }, () => {
-        resolve(clientId);
-      });
-    });
-  });
-}
-
-export function getStoredUsage(): Promise<UsageStatus> {
-  return new Promise((resolve) => {
-    if (typeof chrome === "undefined" || !chrome.storage?.local) {
-      resolve(DEFAULT_USAGE);
-      return;
-    }
-
-    chrome.storage.local.get(STORAGE_KEYS.usage, (result) => {
-      resolve({
-        ...DEFAULT_USAGE,
-        ...(result[STORAGE_KEYS.usage] || {}),
-      });
-    });
-  });
-}
-
-export function storeUsage(usage: UsageStatus): void {
-  if (typeof chrome !== "undefined" && chrome.storage?.local) {
-    chrome.storage.local.set({ [STORAGE_KEYS.usage]: usage });
-  }
 }
 
 export function normalizeApiUrl(apiUrl: string): string {

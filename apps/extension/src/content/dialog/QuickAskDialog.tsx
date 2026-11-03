@@ -1,18 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { selectRelevantPageChunks } from "@shared/contextRanking";
+import {
+  DEFAULT_MODELS,
+  isLoopbackModelUrl,
+  normalizeLocalBaseUrl,
+} from "@shared/models";
 import type { PageContextChunk, PageContextPayload } from "@shared/protocol";
 import {
   DEFAULT_SETTINGS,
-  DEFAULT_USAGE,
-  getOrCreateClientId,
   getStoredSettings,
-  getStoredUsage,
   normalizeApiUrl,
-  storeUsage,
   validateApiUrl,
   type QuipSettings,
-  type UsageStatus,
 } from "../../shared/settings";
+import { proxyApiStream } from "../../shared/apiProxy";
 import { renderMarkdown } from "./markdown";
 
 interface ConversationEntry {
@@ -56,45 +57,11 @@ export function QuickAskDialog({
     PageContextChunk[] | null
   >(null);
   const [settings, setSettings] = useState<QuipSettings>(DEFAULT_SETTINGS);
-  const [usage, setUsage] = useState<UsageStatus>(DEFAULT_USAGE);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const chatRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    Promise.all([getStoredSettings(), getStoredUsage()]).then(
-      ([storedSettings, storedUsage]) => {
-        setSettings(storedSettings);
-        setUsage(storedUsage);
-
-        if (storedSettings.useOwnKey) return;
-
-        getOrCreateClientId().then((clientId) => {
-          const apiUrlError = validateApiUrl(storedSettings.apiUrl);
-          if (apiUrlError) return;
-
-          const headers: Record<string, string> = {
-            "x-quip-client-id": clientId,
-          };
-          if (storedSettings.quipApiKey.trim()) {
-            headers["x-quip-api-key"] = storedSettings.quipApiKey.trim();
-          }
-
-          fetch(`${normalizeApiUrl(storedSettings.apiUrl)}/usage`, { headers })
-            .then((res) => (res.ok ? res.json() : null))
-            .then((serverUsage) => {
-              if (!serverUsage) return;
-              const synced = {
-                limit: serverUsage.limit,
-                used: serverUsage.used,
-                remaining: serverUsage.remaining,
-              };
-              setUsage(synced);
-              storeUsage(synced);
-            })
-            .catch(() => {});
-        });
-      },
-    );
+    void getStoredSettings().then(setSettings);
     textareaRef.current?.focus();
   }, []);
 
@@ -126,22 +93,6 @@ export function QuickAskDialog({
     return () => document.removeEventListener("keydown", handleKeyDown, true);
   }, [handleKeyDown]);
 
-  function updateUsageFromResponse(response: Response): void {
-    const rawLimit = response.headers.get("x-quip-free-limit");
-    const rawUsed = response.headers.get("x-quip-free-used");
-    const rawRemaining = response.headers.get("x-quip-free-remaining");
-    if (rawLimit === null || rawUsed === null || rawRemaining === null) return;
-
-    const limit = Number(rawLimit);
-    const used = Number(rawUsed);
-    const remaining = Number(rawRemaining);
-    if (![limit, used, remaining].every(Number.isFinite)) return;
-
-    const nextUsage = { limit, used, remaining };
-    setUsage(nextUsage);
-    storeUsage(nextUsage);
-  }
-
   async function ask(promptOverride?: string) {
     const prompt = (promptOverride ?? question).trim();
     if (!prompt || loading) return;
@@ -154,16 +105,18 @@ export function QuickAskDialog({
 
     if (
       settings.useOwnKey &&
-      (!settings.llmApiKey.trim() || !settings.model.trim())
+      settings.provider !== "local" &&
+      !settings.llmApiKey.trim()
     ) {
-      setError("Finish your provider, model, and API key setup to continue.");
+      setError("Add your provider API key in Quip settings to continue.");
       return;
     }
-
-    if (!settings.useOwnKey && usage.remaining === 0) {
-      setError(
-        `Your ${usage.limit} free request${usage.limit === 1 ? "" : "s"} ${usage.limit === 1 ? "is" : "are"} complete. Add your own API key to keep asking.`,
-      );
+    if (
+      settings.useOwnKey &&
+      settings.provider === "local" &&
+      !isLoopbackModelUrl(settings.localBaseUrl)
+    ) {
+      setError("Set a valid localhost model endpoint to continue.");
       return;
     }
 
@@ -186,10 +139,8 @@ export function QuickAskDialog({
     setLastSentChunks(requestChunks);
 
     try {
-      const clientId = await getOrCreateClientId();
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
-        "x-quip-client-id": clientId,
       };
 
       if (settings.quipApiKey.trim()) {
@@ -197,53 +148,17 @@ export function QuickAskDialog({
       }
       if (settings.useOwnKey) {
         headers["x-quip-llm-provider"] = settings.provider;
-        headers["x-quip-llm-model"] = settings.model.trim();
-        headers["x-quip-llm-api-key"] = settings.llmApiKey.trim();
-      }
-
-      const response = await fetch(`${normalizeApiUrl(settings.apiUrl)}/ask`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          question: prompt,
-          selectedText,
-          pageTitle: initialContext.title,
-          pageUrl: initialContext.url,
-          pageContext: requestContext,
-          stream: true,
-          conversationHistory: history,
-        }),
-      });
-
-      updateUsageFromResponse(response);
-
-      if (!response.ok) {
-        const errorBody = await response.json().catch(() => ({}));
-        if (errorBody.usageStatus) {
-          setUsage(errorBody.usageStatus);
-          storeUsage(errorBody.usageStatus);
+        headers["x-quip-llm-model"] =
+          settings.model.trim() || DEFAULT_MODELS[settings.provider];
+        if (settings.provider === "local") {
+          headers["x-quip-llm-base-url"] = normalizeLocalBaseUrl(
+            settings.localBaseUrl,
+          );
+        } else {
+          headers["x-quip-llm-api-key"] = settings.llmApiKey.trim();
         }
-        throw new Error(
-          errorBody.error ||
-            `Quip could not complete the request (${response.status}).`,
-        );
       }
 
-      const reader = response.body?.getReader();
-      if (!reader) {
-        const data = await response.json();
-        const completedAnswer = data.answer || "";
-        setConversation([
-          ...history,
-          { role: "user", content: prompt },
-          { role: "assistant", content: completedAnswer },
-        ]);
-        setCurrentPrompt("");
-        setStreamingAnswer("");
-        return;
-      }
-
-      const decoder = new TextDecoder();
       let buffer = "";
       let accumulated = "";
       let streamError = "";
@@ -261,10 +176,6 @@ export function QuickAskDialog({
             }
             if (typeof parsed.error === "string") {
               streamError = parsed.error;
-              if (parsed.usageStatus) {
-                setUsage(parsed.usageStatus);
-                storeUsage(parsed.usageStatus);
-              }
             }
           } catch {
             // Ignore malformed stream events and continue reading.
@@ -272,14 +183,37 @@ export function QuickAskDialog({
         }
       };
 
-      while (true) {
-        const { done, value } = await reader.read();
-        buffer += decoder.decode(value, { stream: !done });
-        const events = buffer.split("\n\n");
-        buffer = events.pop() || "";
-        events.forEach(processEvent);
-        if (done) break;
+      const response = await proxyApiStream(
+        {
+          url: `${normalizeApiUrl(settings.apiUrl)}/ask`,
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            question: prompt,
+            selectedText,
+            pageTitle: initialContext.title,
+            pageUrl: initialContext.url,
+            pageContext: requestContext,
+            stream: true,
+            conversationHistory: history,
+          }),
+        },
+        (data) => {
+          buffer += data;
+          const events = buffer.split("\n\n");
+          buffer = events.pop() || "";
+          events.forEach(processEvent);
+        },
+      );
+
+      if (!response.ok) {
+        const errorBody = parseJsonObject(response.body);
+        throw new Error(
+          (typeof errorBody.error === "string" && errorBody.error) ||
+            `Quip could not complete the request (${response.status}).`,
+        );
       }
+
       if (buffer.trim()) processEvent(buffer);
       if (streamError) throw new Error(streamError);
 
@@ -343,8 +277,14 @@ export function QuickAskDialog({
   }
 
   const prompts = selectedText ? SELECTION_PROMPTS : PAGE_PROMPTS;
-  const isQuotaExhausted = !settings.useOwnKey && usage.remaining === 0;
-  const providerLabel = settings.provider === "openai" ? "OpenAI" : "Anthropic";
+  const providerLabel =
+    settings.provider === "openai"
+      ? "OpenAI"
+      : settings.provider === "anthropic"
+        ? "Anthropic"
+        : "Local";
+  const resolvedModel =
+    settings.model.trim() || DEFAULT_MODELS[settings.provider];
   const pageLabel = initialContext.title || getHostname(initialContext.url);
   const contextPreviewChunks =
     lastSentChunks === null ? initialContext.chunks || [] : lastSentChunks;
@@ -369,10 +309,7 @@ export function QuickAskDialog({
         <header className="quip-header">
           <div className="quip-brand">
             <span className="quip-logo" aria-hidden="true">
-              <svg viewBox="0 0 24 24">
-                <path d="M7.5 5.75A6.25 6.25 0 0 1 18.16 10.2c0 1.78-.75 3.39-1.96 4.53l1.05 2.77-3.07-.58A6.25 6.25 0 1 1 7.5 5.75Z" />
-                <path d="m9.5 11.7 1.65 1.65 3.55-3.75" />
-              </svg>
+              q
             </span>
             <span>
               <strong>Quip</strong>
@@ -382,14 +319,14 @@ export function QuickAskDialog({
 
           <div className="quip-header-actions">
             <button
-              className="quip-plan-pill"
+              className="quip-model-pill"
               onClick={openSettings}
               title="Open model settings"
             >
               <span className="quip-status-dot" />
               {settings.useOwnKey
-                ? `${providerLabel}${settings.model ? ` · ${settings.model}` : ""}`
-                : `${usage.remaining} free left`}
+                ? `${providerLabel} · ${resolvedModel}${settings.model.trim() ? "" : " (default)"}`
+                : "Self-hosted server"}
             </button>
             {conversation.length > 0 && (
               <button
@@ -657,30 +594,13 @@ export function QuickAskDialog({
                 </svg>
               </span>
               <span>{error}</span>
-              {isQuotaExhausted ? (
-                <button onClick={openSettings}>Add API key</button>
-              ) : (
-                currentPrompt && <button onClick={retry}>Try again</button>
-              )}
+              <button onClick={openSettings}>Model settings</button>
+              {currentPrompt && <button onClick={retry}>Try again</button>}
             </div>
           )}
         </main>
 
         <footer className="quip-composer-wrap">
-          {isQuotaExhausted && (
-            <div className="quip-quota-gate">
-              <div>
-                <strong>
-                  You’ve used your {usage.limit} free request
-                  {usage.limit === 1 ? "" : "s"}
-                </strong>
-                <span>
-                  Connect your own model to continue without a Quip limit.
-                </span>
-              </div>
-              <button onClick={openSettings}>Configure model</button>
-            </div>
-          )}
           <div className={`quip-composer ${loading ? "is-loading" : ""}`}>
             <textarea
               ref={textareaRef}
@@ -693,13 +613,13 @@ export function QuickAskDialog({
                   : "Ask anything about this page..."
               }
               rows={1}
-              disabled={loading || isQuotaExhausted}
+              disabled={loading}
               aria-label="Question for Quip"
             />
             <button
               className="quip-send-button"
               onClick={() => void ask()}
-              disabled={loading || isQuotaExhausted || !question.trim()}
+              disabled={loading || !question.trim()}
               aria-label="Send question"
             >
               {loading ? (
@@ -717,7 +637,9 @@ export function QuickAskDialog({
               new line
             </span>
             <button onClick={openSettings}>
-              {settings.useOwnKey ? `${providerLabel} model` : "Model settings"}
+              {settings.useOwnKey
+                ? `${providerLabel} · ${settings.model.trim() ? "Custom model" : "Default model"}`
+                : "Model settings"}
             </button>
           </div>
         </footer>
@@ -738,5 +660,16 @@ function getHostname(url: string): string {
     return new URL(url).hostname;
   } catch {
     return "Current page";
+  }
+}
+
+function parseJsonObject(value: string): Record<string, unknown> {
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return parsed !== null && typeof parsed === "object"
+      ? (parsed as Record<string, unknown>)
+      : {};
+  } catch {
+    return {};
   }
 }

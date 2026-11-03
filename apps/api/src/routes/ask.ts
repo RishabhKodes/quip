@@ -1,5 +1,12 @@
-import type { FastifyInstance, FastifyReply } from "fastify";
-import { LIMITS } from "@quip/shared";
+import type { FastifyInstance } from "fastify";
+import {
+  DEFAULT_LOCAL_BASE_URL,
+  DEFAULT_MODELS,
+  isLoopbackModelUrl,
+  LIMITS,
+  LLM_PROVIDERS,
+  normalizeLocalBaseUrl,
+} from "@quip/shared";
 import { z } from "zod";
 import { buildMessages } from "../services/context/buildPrompt.js";
 import {
@@ -7,11 +14,6 @@ import {
   streamLLM,
   type LlmRequestConfig,
 } from "../services/llm/llmClient.js";
-import {
-  FileFreeUsageStore,
-  type FreeUsageStore,
-  type UsageSnapshot,
-} from "../services/usage/freeUsageStore.js";
 
 const askSchema = z.object({
   question: z.string().trim().min(1).max(LIMITS.questionChars),
@@ -77,14 +79,13 @@ const askSchema = z.object({
     .default([]),
 });
 
-interface AskRouteOptions {
-  usageStore?: FreeUsageStore;
-}
-
-const clientIdSchema = z.string().uuid();
-const providerSchema = z.enum(["openai", "anthropic"]);
+const providerSchema = z.enum(LLM_PROVIDERS);
 const apiKeySchema = z.string().min(1).max(LIMITS.apiKeyChars);
 const modelSchema = z.string().trim().min(1).max(LIMITS.modelIdChars);
+const localBaseUrlSchema = z
+  .string()
+  .max(LIMITS.pageUrlChars)
+  .refine(isLoopbackModelUrl);
 
 function getHeader(
   headers: Record<string, string | string[] | undefined>,
@@ -94,31 +95,7 @@ function getHeader(
   return Array.isArray(value) ? value[0] || "" : value || "";
 }
 
-function setUsageHeaders(reply: FastifyReply, usage: UsageSnapshot): void {
-  reply.header("x-quip-free-limit", usage.limit);
-  reply.header("x-quip-free-used", usage.used);
-  reply.header("x-quip-free-remaining", usage.remaining);
-}
-
-export async function askRoute(
-  app: FastifyInstance,
-  options: AskRouteOptions = {},
-) {
-  const usageStore = options.usageStore || new FileFreeUsageStore();
-
-  app.get("/usage", async (request, reply) => {
-    reply.header("Cache-Control", "no-store");
-    const clientId = getHeader(request.headers, "x-quip-client-id");
-    const parsedClientId = clientIdSchema.safeParse(clientId);
-    if (!parsedClientId.success) {
-      return reply
-        .code(400)
-        .send({ error: "A valid Quip client ID is required." });
-    }
-
-    return usageStore.get(parsedClientId.data);
-  });
-
+export async function askRoute(app: FastifyInstance) {
   app.post("/ask", async (request, reply) => {
     const parsed = askSchema.safeParse(request.body);
     if (!parsed.success) {
@@ -129,50 +106,48 @@ export async function askRoute(
     const provider = getHeader(request.headers, "x-quip-llm-provider");
     const apiKey = getHeader(request.headers, "x-quip-llm-api-key");
     const model = getHeader(request.headers, "x-quip-llm-model");
-    const isByokRequest = Boolean(provider || apiKey || model);
+    const localBaseUrl = getHeader(request.headers, "x-quip-llm-base-url");
+    const isByokRequest = Boolean(provider || apiKey || model || localBaseUrl);
     let llmConfig: LlmRequestConfig | undefined;
-    let reservedClientId: string | undefined;
 
     if (isByokRequest) {
       const parsedProvider = providerSchema.safeParse(provider);
-      const parsedApiKey = apiKeySchema.safeParse(apiKey);
-      const parsedModel = modelSchema.safeParse(model);
-      if (
-        !parsedProvider.success ||
-        !parsedApiKey.success ||
-        !parsedModel.success
-      ) {
+      if (!parsedProvider.success) {
         return reply.code(400).send({
-          error: "Provider, model, and API key are required for BYOK requests.",
+          error: "A valid LLM provider is required.",
           code: "INVALID_LLM_CONFIG",
         });
       }
-      llmConfig = {
-        provider: parsedProvider.data,
-        apiKey: parsedApiKey.data,
-        model: parsedModel.data,
-      };
-    } else {
-      const clientId = getHeader(request.headers, "x-quip-client-id");
-      const parsedClientId = clientIdSchema.safeParse(clientId);
-      if (!parsedClientId.success) {
-        return reply
-          .code(400)
-          .send({ error: "A valid Quip client ID is required." });
-      }
 
-      const usage = usageStore.reserve(parsedClientId.data);
-      if (!usage) {
-        const currentUsage = usageStore.get(parsedClientId.data);
-        const requestLabel = currentUsage.limit === 1 ? "request" : "requests";
-        setUsageHeaders(reply, currentUsage);
-        return reply.code(402).send({
-          error: `You have used all ${currentUsage.limit} free ${requestLabel}. Add your API key and model in Quip settings to continue.`,
-          code: "FREE_LIMIT_REACHED",
-          usageStatus: currentUsage,
+      const resolvedModel = model || DEFAULT_MODELS[parsedProvider.data];
+      const parsedModel = modelSchema.safeParse(resolvedModel);
+      const parsedApiKey = apiKeySchema.safeParse(apiKey);
+      const isLocal = parsedProvider.data === "local";
+      const resolvedLocalBaseUrl = normalizeLocalBaseUrl(
+        localBaseUrl || DEFAULT_LOCAL_BASE_URL,
+      );
+      const parsedLocalBaseUrl =
+        localBaseUrlSchema.safeParse(resolvedLocalBaseUrl);
+
+      if (
+        !parsedModel.success ||
+        (!isLocal && !parsedApiKey.success) ||
+        (isLocal && !parsedLocalBaseUrl.success)
+      ) {
+        return reply.code(400).send({
+          error: isLocal
+            ? "A valid loopback model URL and model ID are required."
+            : "An API key and valid model ID are required.",
+          code: "INVALID_LLM_CONFIG",
         });
       }
-      reservedClientId = parsedClientId.data;
+
+      llmConfig = {
+        provider: parsedProvider.data,
+        model: parsedModel.data,
+        ...(parsedApiKey.success ? { apiKey: parsedApiKey.data } : {}),
+        ...(isLocal ? { baseUrl: parsedLocalBaseUrl.data } : {}),
+      };
     }
 
     const messages = buildMessages({
@@ -191,21 +166,12 @@ export async function askRoute(
       try {
         firstChunk = await iterator.next();
       } catch {
-        const usageStatus = reservedClientId
-          ? usageStore.release(reservedClientId)
-          : undefined;
-        if (usageStatus) setUsageHeaders(reply, usageStatus);
         return reply.code(502).send({
           error: "The configured LLM provider rejected the request.",
           code: "LLM_REQUEST_FAILED",
-          usageStatus,
         });
       }
 
-      const usageStatus = reservedClientId
-        ? usageStore.get(reservedClientId)
-        : undefined;
-      if (usageStatus) setUsageHeaders(reply, usageStatus);
       reply.header("Content-Type", "text/event-stream; charset=utf-8");
       reply.header("Cache-Control", "no-cache, no-transform");
       reply.header("Connection", "keep-alive");
@@ -231,14 +197,10 @@ export async function askRoute(
         }
         reply.raw.write("data: [DONE]\n\n");
       } catch {
-        const releasedUsage = reservedClientId
-          ? usageStore.release(reservedClientId)
-          : undefined;
         reply.raw.write(
           `data: ${JSON.stringify({
             error: "The LLM response was interrupted.",
             code: "LLM_STREAM_FAILED",
-            usageStatus: releasedUsage,
           })}\n\n`,
         );
       } finally {
@@ -249,21 +211,12 @@ export async function askRoute(
 
     try {
       const result = await callLLM(messages, llmConfig);
-      const usageStatus = reservedClientId
-        ? usageStore.get(reservedClientId)
-        : undefined;
-      if (usageStatus) setUsageHeaders(reply, usageStatus);
       reply.header("Cache-Control", "no-store");
       return result;
     } catch {
-      const usageStatus = reservedClientId
-        ? usageStore.release(reservedClientId)
-        : undefined;
-      if (usageStatus) setUsageHeaders(reply, usageStatus);
       return reply.code(502).send({
         error: "The configured LLM provider rejected the request.",
         code: "LLM_REQUEST_FAILED",
-        usageStatus,
       });
     }
   });

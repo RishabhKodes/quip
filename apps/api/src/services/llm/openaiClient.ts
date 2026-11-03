@@ -1,12 +1,21 @@
 import OpenAI from "openai";
-import type { AskAIResponse } from "@quip/shared";
+import { DEFAULT_MODELS, type AskAIResponse } from "@quip/shared";
 import type { ChatMessage } from "../context/buildPrompt.js";
 import type { LlmRequestConfig } from "./llmClient.js";
 
 function getClient(config?: LlmRequestConfig): OpenAI {
   return new OpenAI({
-    apiKey: config?.apiKey || process.env.OPENAI_API_KEY,
+    apiKey:
+      config?.apiKey ||
+      (config?.provider === "local" ? "local" : process.env.OPENAI_API_KEY),
+    ...(config?.baseUrl ? { baseURL: config.baseUrl } : {}),
   });
+}
+
+function getModel(config?: LlmRequestConfig): string {
+  if (config?.model) return config.model;
+  if (config?.provider === "local") return DEFAULT_MODELS.local;
+  return process.env.OPENAI_MODEL || DEFAULT_MODELS.openai;
 }
 
 function toOpenAIMessages(messages: ChatMessage[]) {
@@ -22,7 +31,7 @@ export async function callOpenAI(
 ): Promise<AskAIResponse> {
   const client = getClient(config);
   const response = await client.chat.completions.create({
-    model: config?.model || process.env.OPENAI_MODEL || "gpt-4o-mini",
+    model: getModel(config),
     messages: toOpenAIMessages(messages),
     max_tokens: 2048,
   });
@@ -43,7 +52,7 @@ export async function* streamOpenAI(
 ): AsyncGenerator<string> {
   const client = getClient(config);
   const stream = await client.chat.completions.create({
-    model: config?.model || process.env.OPENAI_MODEL || "gpt-4o-mini",
+    model: getModel(config),
     messages: toOpenAIMessages(messages),
     max_tokens: 2048,
     stream: true,

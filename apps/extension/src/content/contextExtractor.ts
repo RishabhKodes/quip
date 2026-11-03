@@ -13,11 +13,14 @@ export function extractPageContext(input: {
 
   const adapterContext = extractWithAdapter(adapter, input.selectedText);
   if (adapterContext) {
+    const nearbyText =
+      adapterContext.nearbyText || extractNearbyText(input.selectedText);
     return {
       ...adapterContext,
       title,
       url,
       selectedText: input.selectedText.slice(0, LIMITS.selectedTextChars),
+      nearbyText: nearbyText || undefined,
       visibleText:
         chunks.length === 0
           ? adapterContext.visibleText || extractVisibleText()

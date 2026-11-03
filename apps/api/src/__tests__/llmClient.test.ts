@@ -42,4 +42,18 @@ describe("LLM provider selection", () => {
     expect(callAnthropic).toHaveBeenCalledOnce();
     expect(callOpenAI).not.toHaveBeenCalled();
   });
+
+  it("uses the OpenAI-compatible client for local providers", async () => {
+    await callLLM([], {
+      provider: "local",
+      model: "llama3.2",
+      baseUrl: "http://127.0.0.1:11434/v1",
+    });
+
+    expect(callOpenAI).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({ provider: "local" }),
+    );
+    expect(callAnthropic).not.toHaveBeenCalled();
+  });
 });

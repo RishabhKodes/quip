@@ -1,25 +1,21 @@
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
+  DEFAULT_MODELS,
+  isLoopbackModelUrl,
+  LLM_PROVIDERS,
+} from "@shared/models";
+import {
   DEFAULT_SETTINGS,
-  DEFAULT_USAGE,
-  getOrCreateClientId,
   getStoredSettings,
-  getStoredUsage,
-  normalizeApiUrl,
-  storeUsage,
   validateApiUrl,
-  type LlmProvider,
   type QuipSettings,
-  type UsageStatus,
 } from "../shared/settings";
 import { STORAGE_KEYS } from "../shared/constants";
 import "./popup.css";
 
 function Popup() {
   const [settings, setSettings] = useState<QuipSettings>(DEFAULT_SETTINGS);
-  const [usage, setUsage] = useState<UsageStatus>(DEFAULT_USAGE);
-  const [newDomain, setNewDomain] = useState("");
   const [showApiKey, setShowApiKey] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [notice, setNotice] = useState("");
@@ -27,50 +23,16 @@ function Popup() {
   const [opening, setOpening] = useState(false);
 
   useEffect(() => {
-    Promise.all([getStoredSettings(), getStoredUsage()]).then(
-      ([storedSettings, storedUsage]) => {
-        setSettings(storedSettings);
-        setUsage(storedUsage);
-        setLoaded(true);
-        void refreshUsage(storedSettings);
-      },
-    );
+    getStoredSettings().then((storedSettings) => {
+      setSettings(storedSettings);
+      setLoaded(true);
+    });
   }, []);
-
-  const usagePercent = useMemo(
-    () => Math.min((usage.used / Math.max(usage.limit, 1)) * 100, 100),
-    [usage],
-  );
 
   function updateSettings(patch: Partial<QuipSettings>) {
     setSettings((current) => ({ ...current, ...patch }));
     setNotice("");
     setError("");
-  }
-
-  async function refreshUsage(settingsToUse = settings) {
-    if (validateApiUrl(settingsToUse.apiUrl)) return;
-
-    try {
-      const clientId = await getOrCreateClientId();
-      const headers: Record<string, string> = {
-        "x-quip-client-id": clientId,
-      };
-      if (settingsToUse.quipApiKey.trim()) {
-        headers["x-quip-api-key"] = settingsToUse.quipApiKey.trim();
-      }
-
-      const response = await fetch(
-        `${normalizeApiUrl(settingsToUse.apiUrl)}/usage`,
-        { headers },
-      );
-      if (!response.ok) return;
-      const nextUsage = (await response.json()) as UsageStatus;
-      setUsage(nextUsage);
-      storeUsage(nextUsage);
-    } catch {
-      // Cached usage remains available while the Quip API is offline.
-    }
   }
 
   function saveSettings() {
@@ -81,9 +43,18 @@ function Popup() {
     }
     if (
       settings.useOwnKey &&
-      (!settings.model.trim() || !settings.llmApiKey.trim())
+      settings.provider !== "local" &&
+      !settings.llmApiKey.trim()
     ) {
-      setError("Your provider, model, and API key are required.");
+      setError("Your provider API key is required.");
+      return;
+    }
+    if (
+      settings.useOwnKey &&
+      settings.provider === "local" &&
+      !isLoopbackModelUrl(settings.localBaseUrl)
+    ) {
+      setError("Enter a valid localhost model endpoint.");
       return;
     }
 
@@ -91,28 +62,6 @@ function Popup() {
       setNotice("Settings saved");
       setError("");
       window.setTimeout(() => setNotice(""), 1800);
-      void refreshUsage(settings);
-    });
-  }
-
-  function addDomain() {
-    const domain = newDomain
-      .trim()
-      .toLowerCase()
-      .replace(/^https?:\/\//, "")
-      .replace(/\/.*$/, "");
-    if (!domain || settings.blockedDomains.includes(domain)) return;
-    updateSettings({
-      blockedDomains: [...settings.blockedDomains, domain],
-    });
-    setNewDomain("");
-  }
-
-  function removeDomain(domain: string) {
-    updateSettings({
-      blockedDomains: settings.blockedDomains.filter(
-        (blockedDomain) => blockedDomain !== domain,
-      ),
     });
   }
 
@@ -146,7 +95,14 @@ function Popup() {
     }
   }
 
-  const providerName = settings.provider === "openai" ? "OpenAI" : "Anthropic";
+  const providerName =
+    settings.provider === "openai"
+      ? "OpenAI"
+      : settings.provider === "anthropic"
+        ? "Anthropic"
+        : "Local";
+  const defaultModel = DEFAULT_MODELS[settings.provider];
+  const resolvedModel = settings.model.trim() || defaultModel;
 
   if (!loaded) {
     return (
@@ -160,11 +116,8 @@ function Popup() {
     <main className="popup-shell">
       <header className="popup-header">
         <div className="popup-brand">
-          <span className="popup-logo">
-            <svg viewBox="0 0 24 24">
-              <path d="M7.5 5.75A6.25 6.25 0 0 1 18.16 10.2c0 1.78-.75 3.39-1.96 4.53l1.05 2.77-3.07-.58A6.25 6.25 0 1 1 7.5 5.75Z" />
-              <path d="m9.5 11.7 1.65 1.65 3.55-3.75" />
-            </svg>
+          <span className="popup-logo" aria-hidden="true">
+            q
           </span>
           <span>
             <strong>Quip</strong>
@@ -182,38 +135,21 @@ function Popup() {
       </header>
 
       <div className="popup-content">
-        <section className="popup-usage-card">
-          {settings.useOwnKey ? (
-            <>
-              <div className="popup-provider-mark">
-                <span>{settings.provider === "openai" ? "O" : "A"}</span>
-              </div>
-              <div className="popup-usage-copy">
-                <span className="popup-kicker">Personal model connected</span>
-                <strong>{settings.model || providerName}</strong>
-                <small>Requests use your {providerName} API key</small>
-              </div>
-              <span className="popup-connected">Active</span>
-            </>
-          ) : (
-            <>
-              <div
-                className="popup-usage-ring"
-                style={
-                  { "--usage": `${usagePercent * 3.6}deg` } as CSSProperties
-                }
-              >
-                <span>{usage.remaining}</span>
-              </div>
-              <div className="popup-usage-copy">
-                <span className="popup-kicker">Free requests</span>
-                <strong>
-                  {usage.remaining} of {usage.limit} remaining
-                </strong>
-                <small>Add your own key anytime for unlimited use</small>
-              </div>
-            </>
-          )}
+        <section className="popup-connection-card">
+          <div className="popup-provider-mark">
+            <span>q</span>
+          </div>
+          <div className="popup-connection-copy">
+            <span className="popup-kicker">Model connection</span>
+            <strong>
+              {settings.useOwnKey ? providerName : "Self-hosted server"}
+            </strong>
+            <small>
+              {settings.useOwnKey
+                ? resolvedModel
+                : "Uses the provider configured on your Quip API"}
+            </small>
+          </div>
         </section>
 
         <section className="popup-section">
@@ -231,14 +167,13 @@ function Popup() {
             >
               <span className="popup-mode-icon">
                 <svg viewBox="0 0 24 24">
-                  <path d="M12 3v18M8 7h6.5a3 3 0 0 1 0 6H10a3 3 0 0 0 0 6h6" />
+                  <rect x="4" y="4" width="16" height="16" rx="3" />
+                  <path d="M4 12h16M8 8h.01M8 16h.01" />
                 </svg>
               </span>
               <span>
-                <strong>Quip Free</strong>
-                <small>
-                  {usage.limit} included request{usage.limit === 1 ? "" : "s"}
-                </small>
+                <strong>Self-hosted server</strong>
+                <small>Your server’s provider settings</small>
               </span>
             </button>
             <button
@@ -252,8 +187,8 @@ function Popup() {
                 </svg>
               </span>
               <span>
-                <strong>Use my key</strong>
-                <small>Your provider account</small>
+                <strong>Own provider</strong>
+                <small>Cloud API or local model</small>
               </span>
             </button>
           </div>
@@ -263,77 +198,109 @@ function Popup() {
               <label>
                 <span>Provider</span>
                 <div className="popup-provider-switch">
-                  {(["openai", "anthropic"] as LlmProvider[]).map(
-                    (provider) => (
-                      <button
-                        key={provider}
-                        className={
-                          settings.provider === provider ? "is-active" : ""
-                        }
-                        onClick={() => updateSettings({ provider })}
-                      >
-                        <b>{provider === "openai" ? "O" : "A"}</b>
-                        {provider === "openai" ? "OpenAI" : "Anthropic"}
-                      </button>
-                    ),
-                  )}
+                  {LLM_PROVIDERS.map((provider) => (
+                    <button
+                      key={provider}
+                      className={
+                        settings.provider === provider ? "is-active" : ""
+                      }
+                      onClick={() => {
+                        if (provider === settings.provider) return;
+                        setShowApiKey(false);
+                        updateSettings({ provider, model: "", llmApiKey: "" });
+                      }}
+                    >
+                      <b>
+                        {provider === "openai"
+                          ? "O"
+                          : provider === "anthropic"
+                            ? "A"
+                            : "L"}
+                      </b>
+                      {provider === "openai"
+                        ? "OpenAI"
+                        : provider === "anthropic"
+                          ? "Anthropic"
+                          : "Local"}
+                    </button>
+                  ))}
                 </div>
               </label>
 
               <label>
-                <span>Model ID</span>
+                <span>
+                  Model ID <i>Optional</i>
+                </span>
                 <input
                   type="text"
                   value={settings.model}
                   onChange={(event) =>
                     updateSettings({ model: event.target.value })
                   }
-                  placeholder={
-                    settings.provider === "openai"
-                      ? "Enter your OpenAI model ID"
-                      : "Enter your Anthropic model ID"
-                  }
+                  placeholder={`Default: ${defaultModel}`}
                   spellCheck={false}
                 />
                 <small>
-                  Use any chat model enabled for your provider account.
+                  Default model: <code>{defaultModel}</code>. Enter a model ID
+                  to override it.
                 </small>
               </label>
 
-              <label>
-                <span>API key</span>
-                <div className="popup-secret-input">
+              {settings.provider === "local" ? (
+                <label>
+                  <span>Local endpoint</span>
                   <input
-                    type={showApiKey ? "text" : "password"}
-                    value={settings.llmApiKey}
+                    type="url"
+                    value={settings.localBaseUrl}
                     onChange={(event) =>
-                      updateSettings({ llmApiKey: event.target.value })
+                      updateSettings({ localBaseUrl: event.target.value })
                     }
-                    placeholder={
-                      settings.provider === "openai" ? "sk-..." : "sk-ant-..."
-                    }
-                    autoComplete="off"
+                    placeholder="http://127.0.0.1:11434/v1"
                     spellCheck={false}
                   />
-                  <button
-                    onClick={() => setShowApiKey((visible) => !visible)}
-                    aria-label={showApiKey ? "Hide API key" : "Show API key"}
-                  >
-                    <svg viewBox="0 0 24 24">
-                      {showApiKey ? (
-                        <>
+                  <small>
+                    OpenAI-compatible and loopback-only. The model must run on
+                    the Quip API host.
+                  </small>
+                </label>
+              ) : (
+                <label>
+                  <span>API key</span>
+                  <div className="popup-secret-input">
+                    <input
+                      type={showApiKey ? "text" : "password"}
+                      value={settings.llmApiKey}
+                      onChange={(event) =>
+                        updateSettings({ llmApiKey: event.target.value })
+                      }
+                      placeholder={
+                        settings.provider === "openai" ? "sk-..." : "sk-ant-..."
+                      }
+                      autoComplete="off"
+                      spellCheck={false}
+                    />
+                    <button
+                      onClick={() => setShowApiKey((visible) => !visible)}
+                      aria-label={showApiKey ? "Hide API key" : "Show API key"}
+                    >
+                      <svg viewBox="0 0 24 24">
+                        {showApiKey ? (
                           <path d="m3 3 18 18M10.6 10.7a2 2 0 0 0 2.7 2.7M9.9 4.2A10.8 10.8 0 0 1 12 4c5.5 0 9 6 9 6a15.7 15.7 0 0 1-2.1 2.8M6.6 6.6C4.3 8.1 3 10 3 10s3.5 6 9 6c1 0 2-.2 2.8-.5" />
-                        </>
-                      ) : (
-                        <>
-                          <path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6Z" />
-                          <circle cx="12" cy="12" r="2.5" />
-                        </>
-                      )}
-                    </svg>
-                  </button>
-                </div>
-              </label>
+                        ) : (
+                          <>
+                            <path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6Z" />
+                            <circle cx="12" cy="12" r="2.5" />
+                          </>
+                        )}
+                      </svg>
+                    </button>
+                  </div>
+                  <small>
+                    Use a provider API key. Claude Code and Codex subscription
+                    sign-in are not connected to Quip.
+                  </small>
+                </label>
+              )}
 
               <div className="popup-privacy-note">
                 <svg viewBox="0 0 24 24">
@@ -341,8 +308,9 @@ function Popup() {
                   <path d="M8 10V7a4 4 0 0 1 8 0v3" />
                 </svg>
                 <span>
-                  Stored only in this browser. Your key passes through your Quip
-                  API for each request and is never persisted there.
+                  {settings.provider === "local"
+                    ? "Local requests stay between your Quip API and the loopback model endpoint."
+                    : "Stored only in this browser. Your key passes through your Quip API for each request and is never persisted there."}
                 </span>
               </div>
             </div>
@@ -372,42 +340,6 @@ function Popup() {
               <option value="selected-only">Selected text only</option>
             </select>
           </label>
-
-          <label className="popup-field">
-            <span>Blocked domains</span>
-            <div className="popup-domain-input">
-              <input
-                type="text"
-                value={newDomain}
-                onChange={(event) => setNewDomain(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    event.preventDefault();
-                    addDomain();
-                  }
-                }}
-                placeholder="example.com"
-                spellCheck={false}
-              />
-              <button onClick={addDomain}>Add</button>
-            </div>
-          </label>
-
-          {settings.blockedDomains.length > 0 && (
-            <div className="popup-domain-list">
-              {settings.blockedDomains.map((domain) => (
-                <span key={domain}>
-                  {domain}
-                  <button
-                    onClick={() => removeDomain(domain)}
-                    aria-label={`Remove ${domain}`}
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
         </section>
 
         <details className="popup-advanced">

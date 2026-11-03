@@ -64,7 +64,11 @@ export function selectRelevantPageChunks(
     index,
     score: scoreChunk(chunk, queryTerms, selectedNeedle),
   }));
-  const coverageSlots = queryTerms.length > 0 ? 3 : LIMITS.relevantPageChunks;
+  const hasRankableSelection = selectedNeedle.length >= 3;
+  const coverageSlots =
+    queryTerms.length > 0 || hasRankableSelection
+      ? 3
+      : LIMITS.relevantPageChunks;
   const relevanceLimit = LIMITS.relevantPageChunks - coverageSlots;
   const selected = new Set<number>();
 
@@ -116,8 +120,9 @@ function scoreChunk(
   let score = 0;
 
   if (
-    selectedNeedle.length >= 20 &&
-    (text.includes(selectedNeedle) || selectedNeedle.includes(text))
+    selectedNeedle.length >= 3 &&
+    (text.includes(selectedNeedle) ||
+      (text.length >= 20 && selectedNeedle.includes(text)))
   ) {
     score += 1000;
   }
@@ -188,9 +193,7 @@ function removeDuplicateChunks(
     if (!normalized || seen.has(normalized)) return false;
     seen.add(normalized);
     return !existingContext.some(
-      (context) =>
-        normalized.length >= 40 &&
-        (context.includes(normalized) || normalized.includes(context)),
+      (context) => normalized.length >= 40 && context.includes(normalized),
     );
   });
 }

@@ -105,6 +105,30 @@ describe("buildMessages", () => {
     expect(user).not.toContain("Noisy navigation");
   });
 
+  it("keeps the defining section for a short selection and generic question", () => {
+    const chunks = Array.from({ length: 40 }, (_, index) => ({
+      kind: "paragraph" as const,
+      text: `Unrelated Kubernetes section ${index}`,
+    }));
+    chunks[27] = {
+      kind: "paragraph",
+      text: "Open-loop means firing an action and assuming it worked, without measuring the result and feeding it back into the next decision.",
+    };
+
+    const messages = buildMessages({
+      question: "What does this mean?",
+      selectedText: "open-loop",
+      pageTitle: "The feedback loops behind Kubernetes",
+      pageUrl:
+        "https://planetscale.com/blog/the-feedback-loops-behind-kubernetes",
+      pageContext: { chunks },
+    });
+
+    const user = messages[messages.length - 1].content;
+    expect(user).toContain("Text the user selected:\nopen-loop");
+    expect(user).toContain("Open-loop means firing an action");
+  });
+
   it("samples structured sections across the page for broad questions", () => {
     const chunks = Array.from({ length: 40 }, (_, index) => ({
       kind: "paragraph" as const,

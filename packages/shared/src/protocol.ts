@@ -10,6 +10,38 @@ export type OpenQuipSettingsMessage = {
 
 export type QuipRuntimeMessage = OpenQuickAskMessage | OpenQuipSettingsMessage;
 
+export type QuipApiProxyRequest = {
+  type: "QUIP_API_PROXY_REQUEST";
+  url: string;
+  method: "GET" | "POST";
+  headers: Record<string, string>;
+  body?: string;
+};
+
+export type QuipApiProxyResponse = {
+  ok: boolean;
+  status: number;
+  headers: Record<string, string>;
+  body: string;
+  networkError?: string;
+};
+
+export type QuipApiStreamRequest = Omit<QuipApiProxyRequest, "type"> & {
+  type: "QUIP_API_STREAM_REQUEST";
+};
+
+export type QuipApiStreamEvent =
+  | {
+      type: "response";
+      ok: boolean;
+      status: number;
+      headers: Record<string, string>;
+    }
+  | { type: "data"; data: string }
+  | { type: "body"; body: string }
+  | { type: "error"; message: string }
+  | { type: "done" };
+
 export type AskAIRequest = {
   question: string;
   selectedText: string;
@@ -39,11 +71,6 @@ export type PageContextPayload = {
 export type AskAIResponse = {
   answer: string;
   model?: string;
-  usageStatus?: {
-    limit: number;
-    used: number;
-    remaining: number;
-  };
   usage?: {
     inputTokens?: number;
     outputTokens?: number;

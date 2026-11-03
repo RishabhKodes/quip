@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import type { AskAIResponse } from "@quip/shared";
+import { DEFAULT_MODELS, type AskAIResponse } from "@quip/shared";
 import type { ChatMessage } from "../context/buildPrompt.js";
 import type { LlmRequestConfig } from "./llmClient.js";
 
@@ -29,9 +29,7 @@ export async function callAnthropic(
 
   const response = await client.messages.create({
     model:
-      config?.model ||
-      process.env.ANTHROPIC_MODEL ||
-      "claude-sonnet-4-20250514",
+      config?.model || process.env.ANTHROPIC_MODEL || DEFAULT_MODELS.anthropic,
     max_tokens: 2048,
     ...(system ? { system } : {}),
     messages: userMessages,
@@ -58,9 +56,7 @@ export async function* streamAnthropic(
 
   const stream = client.messages.stream({
     model:
-      config?.model ||
-      process.env.ANTHROPIC_MODEL ||
-      "claude-sonnet-4-20250514",
+      config?.model || process.env.ANTHROPIC_MODEL || DEFAULT_MODELS.anthropic,
     max_tokens: 2048,
     ...(system ? { system } : {}),
     messages: userMessages,

@@ -1,9 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import cors from "@fastify/cors";
 import Fastify from "fastify";
 import { askRoute } from "../routes/ask.js";
 import { callLLM, streamLLM } from "../services/llm/llmClient.js";
-import { MemoryFreeUsageStore } from "../services/usage/freeUsageStore.js";
 
 vi.mock("../services/llm/llmClient.js", () => ({
   callLLM: vi.fn().mockResolvedValue({
@@ -16,7 +15,6 @@ vi.mock("../services/llm/llmClient.js", () => ({
 
 describe("/api/ask", () => {
   let app: ReturnType<typeof Fastify>;
-  const clientId = "f1f31f6c-3482-4c1f-96e6-6e5cb91224a4";
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -24,9 +22,12 @@ describe("/api/ask", () => {
     await app.register(cors, { origin: true });
     await app.register(askRoute, {
       prefix: "/api",
-      usageStore: new MemoryFreeUsageStore(),
     });
     await app.ready();
+  });
+
+  afterEach(async () => {
+    await app.close();
   });
 
   it("returns 400 when question is missing", async () => {
@@ -53,7 +54,7 @@ describe("/api/ask", () => {
     const res = await app.inject({
       method: "POST",
       url: "/api/ask",
-      headers: { "x-quip-client-id": clientId },
+
       payload: {
         question: "What is this?",
         selectedText: "Hello world",
@@ -71,7 +72,7 @@ describe("/api/ask", () => {
     const res = await app.inject({
       method: "POST",
       url: "/api/ask",
-      headers: { "x-quip-client-id": clientId },
+
       payload: { question: "Hello" },
     });
 
@@ -92,7 +93,7 @@ describe("/api/ask", () => {
     const res = await app.inject({
       method: "POST",
       url: "/api/ask",
-      headers: { "x-quip-client-id": clientId },
+
       payload: {
         question: "Hello",
         pageContext: {
@@ -108,7 +109,7 @@ describe("/api/ask", () => {
     const res = await app.inject({
       method: "POST",
       url: "/api/ask",
-      headers: { "x-quip-client-id": clientId },
+
       payload: {
         question: "Hello",
         pageContext: {
@@ -123,77 +124,26 @@ describe("/api/ask", () => {
     expect(res.statusCode).toBe(400);
   });
 
-  it("reports free usage for a client", async () => {
-    const res = await app.inject({
-      method: "GET",
-      url: "/api/usage",
-      headers: { "x-quip-client-id": clientId },
-    });
-
-    expect(res.statusCode).toBe(200);
-    expect(JSON.parse(res.body)).toEqual({
-      limit: 10,
-      used: 0,
-      remaining: 10,
-    });
+  it("does not expose the retired usage endpoint", async () => {
+    const res = await app.inject({ method: "GET", url: "/api/usage" });
+    expect(res.statusCode).toBe(404);
   });
 
-  it("blocks the eleventh free request", async () => {
-    for (let index = 0; index < 10; index += 1) {
+  it("allows server-configured requests beyond the former allowance without a client ID", async () => {
+    for (let index = 0; index < 12; index += 1) {
       const res = await app.inject({
         method: "POST",
         url: "/api/ask",
-        headers: { "x-quip-client-id": clientId },
         payload: { question: `Question ${index + 1}` },
       });
       expect(res.statusCode).toBe(200);
+      expect(res.headers["x-quip-free-remaining"]).toBeUndefined();
+      expect(res.json()).not.toHaveProperty("usageStatus");
     }
-
-    const blocked = await app.inject({
-      method: "POST",
-      url: "/api/ask",
-      headers: { "x-quip-client-id": clientId },
-      payload: { question: "Question 11" },
-    });
-
-    expect(blocked.statusCode).toBe(402);
-    expect(JSON.parse(blocked.body)).toMatchObject({
-      code: "FREE_LIMIT_REACHED",
-      usageStatus: { limit: 10, used: 10, remaining: 0 },
-    });
+    expect(callLLM).toHaveBeenLastCalledWith(expect.any(Array), undefined);
   });
 
-  it("reports the configured free-request limit when quota is exhausted", async () => {
-    const limitedApp = Fastify();
-    await limitedApp.register(askRoute, {
-      prefix: "/api",
-      usageStore: new MemoryFreeUsageStore(1),
-    });
-    await limitedApp.ready();
-
-    await limitedApp.inject({
-      method: "POST",
-      url: "/api/ask",
-      headers: { "x-quip-client-id": clientId },
-      payload: { question: "Question 1" },
-    });
-    const blocked = await limitedApp.inject({
-      method: "POST",
-      url: "/api/ask",
-      headers: { "x-quip-client-id": clientId },
-      payload: { question: "Question 2" },
-    });
-
-    expect(blocked.statusCode).toBe(402);
-    expect(JSON.parse(blocked.body)).toMatchObject({
-      error: expect.stringContaining("all 1 free request"),
-      usageStatus: { limit: 1, used: 1, remaining: 0 },
-    });
-
-    await limitedApp.close();
-  });
-
-  it("forwards BYOK provider settings without using free quota", async () => {
+  it("forwards BYOK credentials and model to the selected provider", async () => {
     const res = await app.inject({
       method: "POST",
       url: "/api/ask",
@@ -214,33 +164,93 @@ describe("/api/ask", () => {
         apiKey: "user-secret",
       }),
     );
-
-    const usage = await app.inject({
-      method: "GET",
-      url: "/api/usage",
-      headers: { "x-quip-client-id": clientId },
-    });
-    expect(JSON.parse(usage.body).remaining).toBe(10);
   });
 
-  it("does not consume free quota when the provider rejects a request", async () => {
+  it.each([
+    ["openai", "gpt-4o-mini"],
+    ["anthropic", "claude-sonnet-4-20250514"],
+  ] as const)(
+    "uses the default %s model when no custom model is supplied",
+    async (provider, expectedModel) => {
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/ask",
+        headers: {
+          "x-quip-llm-provider": provider,
+          "x-quip-llm-api-key": "user-secret",
+        },
+        payload: { question: "Use the default model" },
+      });
+
+      expect(res.statusCode).toBe(200);
+      expect(vi.mocked(callLLM)).toHaveBeenCalledWith(
+        expect.any(Array),
+        expect.objectContaining({
+          provider,
+          model: expectedModel,
+          apiKey: "user-secret",
+        }),
+      );
+    },
+  );
+
+  it("routes local requests to a loopback OpenAI-compatible endpoint", async () => {
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/ask",
+      headers: {
+        "x-quip-llm-provider": "local",
+        "x-quip-llm-base-url": "http://127.0.0.1:11434/v1/",
+      },
+      payload: { question: "Use my local model" },
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(vi.mocked(callLLM)).toHaveBeenCalledWith(
+      expect.any(Array),
+      expect.objectContaining({
+        provider: "local",
+        model: "llama3.2",
+        baseUrl: "http://127.0.0.1:11434/v1",
+      }),
+    );
+  });
+
+  it("rejects non-loopback local model endpoints", async () => {
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/ask",
+      headers: {
+        "x-quip-llm-provider": "local",
+        "x-quip-llm-base-url": "https://models.example.com/v1",
+      },
+      payload: { question: "Use a remote endpoint" },
+    });
+
+    expect(res.statusCode).toBe(400);
+    expect(JSON.parse(res.body)).toMatchObject({
+      code: "INVALID_LLM_CONFIG",
+    });
+    expect(callLLM).not.toHaveBeenCalled();
+  });
+
+  it("returns a provider error when a request fails", async () => {
     vi.mocked(callLLM).mockRejectedValueOnce(new Error("provider failure"));
 
     const res = await app.inject({
       method: "POST",
       url: "/api/ask",
-      headers: { "x-quip-client-id": clientId },
+
       payload: { question: "Will this fail?" },
     });
 
     expect(res.statusCode).toBe(502);
     expect(JSON.parse(res.body)).toMatchObject({
       code: "LLM_REQUEST_FAILED",
-      usageStatus: { remaining: 10 },
     });
   });
 
-  it("does not consume free quota when a stream fails to start", async () => {
+  it("returns a provider error when a stream fails to start", async () => {
     vi.mocked(streamLLM).mockImplementationOnce(async function* () {
       throw new Error("provider failure");
     });
@@ -248,18 +258,17 @@ describe("/api/ask", () => {
     const res = await app.inject({
       method: "POST",
       url: "/api/ask",
-      headers: { "x-quip-client-id": clientId },
+
       payload: { question: "Stream this", stream: true },
     });
 
     expect(res.statusCode).toBe(502);
     expect(JSON.parse(res.body)).toMatchObject({
       code: "LLM_REQUEST_FAILED",
-      usageStatus: { remaining: 10 },
     });
   });
 
-  it("streams successful responses and records usage", async () => {
+  it("streams successful responses with CORS headers", async () => {
     vi.mocked(streamLLM).mockImplementationOnce(async function* () {
       yield "Hello";
       yield " world";
@@ -269,7 +278,6 @@ describe("/api/ask", () => {
       method: "POST",
       url: "/api/ask",
       headers: {
-        "x-quip-client-id": clientId,
         origin: "https://example.com",
       },
       payload: { question: "Stream this", stream: true },
@@ -280,13 +288,13 @@ describe("/api/ask", () => {
     expect(res.headers["access-control-allow-origin"]).toBe(
       "https://example.com",
     );
-    expect(res.headers["x-quip-free-remaining"]).toBe("9");
+    expect(res.headers["x-quip-free-remaining"]).toBeUndefined();
     expect(res.body).toContain('data: {"text":"Hello"}');
     expect(res.body).toContain('data: {"text":" world"}');
     expect(res.body).toContain("data: [DONE]");
   });
 
-  it("releases quota when an active stream is interrupted", async () => {
+  it("reports an interrupted stream without a successful completion event", async () => {
     vi.mocked(streamLLM).mockImplementationOnce(async function* () {
       yield "Partial";
       throw new Error("stream failure");
@@ -295,19 +303,57 @@ describe("/api/ask", () => {
     const res = await app.inject({
       method: "POST",
       url: "/api/ask",
-      headers: { "x-quip-client-id": clientId },
+
       payload: { question: "Stream this", stream: true },
     });
 
     expect(res.statusCode).toBe(200);
     expect(res.body).toContain('"code":"LLM_STREAM_FAILED"');
-    expect(res.body).toContain('"remaining":10');
-
-    const usage = await app.inject({
-      method: "GET",
-      url: "/api/usage",
-      headers: { "x-quip-client-id": clientId },
-    });
-    expect(JSON.parse(usage.body).remaining).toBe(10);
+    expect(res.body).not.toContain("data: [DONE]");
   });
+  it.each(["openai", "anthropic"])(
+    "rejects %s requests without a personal API key",
+    async (provider) => {
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/ask",
+        headers: { "x-quip-llm-provider": provider },
+        payload: { question: "Hello" },
+      });
+      expect(res.statusCode).toBe(400);
+      expect(res.json().code).toBe("INVALID_LLM_CONFIG");
+      expect(callLLM).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(["openai", "anthropic", "local"])(
+    "streams with the selected %s provider",
+    async (provider) => {
+      vi.mocked(streamLLM).mockImplementationOnce(async function* () {
+        yield "Answer";
+      });
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/ask",
+        headers: {
+          "x-quip-llm-provider": provider,
+          ...(provider === "local"
+            ? {}
+            : { "x-quip-llm-api-key": "personal-key" }),
+        },
+        payload: { question: "Hello", stream: true },
+      });
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toContain('data: {"text":"Answer"}');
+      expect(streamLLM).toHaveBeenCalledWith(
+        expect.any(Array),
+        expect.objectContaining({
+          provider,
+          ...(provider === "local"
+            ? { baseUrl: "http://127.0.0.1:11434/v1" }
+            : { apiKey: "personal-key" }),
+        }),
+      );
+    },
+  );
 });

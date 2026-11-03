@@ -8,12 +8,12 @@ publishing a policy that reflects their deployment.
 
 Quip can read selected text, page title, page URL, headings, nearby text, and a
 bounded amount of visible page text when the user opens the dialog. A
-selected-text-only mode and blocked-domain list are available in settings.
+selected-text-only mode is available in settings.
 
 ## Data Sent to the API
 
 When the user submits a question, the extension sends the question, extracted
-page context, conversation history, and an installation ID to the configured
+page context and conversation history to the configured
 Quip API. The API forwards the prompt to the selected model provider.
 
 ## Personal Provider Keys
@@ -28,13 +28,13 @@ to read stored extension data.
 
 ## Server Storage
 
-The included API stores only free-request counters keyed by installation ID in
-the configured usage store. It does not include analytics, accounts, or
-conversation persistence. Model providers process requests under their own
+The included API does not persist request counters, installation IDs, or
+conversations. It does not include analytics or accounts. Model providers process requests under their own
 terms and retention policies.
 
 ## Deletion
 
 Removing the extension deletes its local settings according to browser
-behavior. A self-hosted operator must define how server-side quota records are
-removed.
+behavior. Legacy `quipUsage` and `quipClientId` browser entries and old API
+usage files are no longer read or updated. Operators upgrading from an older
+version may remove the retired usage file according to their retention policy.

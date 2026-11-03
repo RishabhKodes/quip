@@ -11,12 +11,6 @@ chrome.runtime.onMessage.addListener((message: unknown) => {
   if (!isOpenQuickAskMessage(message)) return;
 
   getStoredSettings().then((settings) => {
-    const hostname = window.location.hostname;
-    const isBlocked = settings.blockedDomains.some(
-      (domain) => hostname === domain || hostname.endsWith(`.${domain}`),
-    );
-    if (isBlocked) return;
-
     const existing = document.getElementById("quip-ai-root");
     if (existing) {
       unmountQuickAskDialog();

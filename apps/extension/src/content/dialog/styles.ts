@@ -1,11 +1,15 @@
 export function getDialogStyles(): string {
   return `
     :host {
-      color-scheme: dark;
+      color-scheme: light;
     }
 
     * {
       box-sizing: border-box;
+    }
+
+    ::selection {
+      background: rgba(187, 220, 206, .45);
     }
 
     button,
@@ -18,66 +22,51 @@ export function getDialogStyles(): string {
     }
 
     .quip-overlay {
-      --purple-50: #f5f3ff;
-      --purple-300: #c4b5fd;
-      --purple-400: #a78bfa;
-      --purple-500: #8b5cf6;
-      --purple-600: #7c3aed;
-      --purple-700: #6d28d9;
-      --surface: #111016;
-      --surface-raised: #18161f;
-      --surface-soft: #201d29;
-      --border: rgba(255, 255, 255, 0.09);
-      --border-strong: rgba(167, 139, 250, 0.32);
-      --text: #f7f5fb;
-      --text-soft: #c8c3d0;
-      --muted: #8d8797;
+      --paper: #fffcf0;
+      --paper-rgb: 255, 252, 240;
+      --paper-secondary: #f2f0e5;
+      --ink: #100f0f;
+      --muted: #6f6e69;
+      --faint: #b7b5ac;
+      --ui: #e6e4d9;
+      --ui-hover: #dad8ce;
+      --ui-active: #cecdc3;
+      --action: #24837b;
+      --action-hover: #3aa99f;
+      --action-wash: #ddf1e4;
+      --positive: #66800b;
+      --negative: #af3029;
+      --negative-wash: #ffe1d5;
       position: fixed;
       inset: 0;
       z-index: 2147483647;
       display: flex;
       align-items: flex-start;
       justify-content: center;
-      padding: clamp(28px, 8vh, 84px) 20px 24px;
-      background:
-        radial-gradient(circle at 50% 12%, rgba(124, 58, 237, 0.16), transparent 34%),
-        rgba(7, 6, 10, 0.68);
-      backdrop-filter: blur(8px);
-      color: var(--text);
-      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      padding: clamp(28px, 8vh, 76px) 20px 24px;
+      background: rgba(16, 15, 15, .52);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "IBM Plex Sans", "Segoe UI", Helvetica, Arial, sans-serif;
       font-size: 14px;
+      font-synthesis: none;
       line-height: 1.5;
-      animation: quip-overlay-in 180ms ease-out;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+      animation: quip-overlay-in 120ms ease-out;
     }
 
     .quip-dialog {
       position: relative;
       display: flex;
       flex-direction: column;
-      width: min(680px, 100%);
-      max-height: min(780px, calc(100vh - clamp(52px, 12vh, 108px)));
+      width: min(700px, 100%);
+      max-height: min(790px, calc(100vh - clamp(52px, 12vh, 100px)));
       overflow: hidden;
-      border: 1px solid rgba(196, 181, 253, 0.18);
-      border-radius: 20px;
-      background:
-        linear-gradient(145deg, rgba(255,255,255,0.025), transparent 28%),
-        var(--surface);
-      box-shadow:
-        0 36px 100px rgba(0, 0, 0, 0.62),
-        0 0 0 1px rgba(0, 0, 0, 0.55),
-        0 0 80px rgba(109, 40, 217, 0.12);
-      animation: quip-dialog-in 220ms cubic-bezier(.2,.8,.2,1);
-    }
-
-    .quip-dialog::before {
-      position: absolute;
-      top: 0;
-      left: 12%;
-      width: 76%;
-      height: 1px;
-      content: "";
-      background: linear-gradient(90deg, transparent, rgba(196,181,253,.58), transparent);
-      pointer-events: none;
+      border: 1px solid var(--ui-active);
+      border-radius: 6px;
+      background: var(--paper);
+      box-shadow: 0 12px 36px rgba(16, 15, 15, .24);
+      animation: quip-dialog-in 140ms ease-out;
     }
 
     .quip-header {
@@ -85,10 +74,10 @@ export function getDialogStyles(): string {
       flex: 0 0 auto;
       align-items: center;
       justify-content: space-between;
-      min-height: 70px;
-      padding: 14px 18px;
-      border-bottom: 1px solid var(--border);
-      background: rgba(17, 16, 22, 0.92);
+      min-height: 62px;
+      padding: 13px 18px;
+      border-bottom: 1px solid var(--ui);
+      background: var(--paper);
     }
 
     .quip-brand,
@@ -96,34 +85,24 @@ export function getDialogStyles(): string {
     .quip-context-summary,
     .quip-message,
     .quip-message-meta,
-    .quip-composer-footer,
-    .quip-quota-gate {
+    .quip-composer-footer {
       display: flex;
       align-items: center;
     }
 
     .quip-brand {
-      gap: 11px;
+      gap: 8px;
     }
 
     .quip-logo {
       display: grid;
-      width: 38px;
-      height: 38px;
+      width: 24px;
+      height: 24px;
       place-items: center;
-      border: 1px solid rgba(196,181,253,.26);
-      border-radius: 12px;
-      background: linear-gradient(145deg, #8b5cf6, #5b21b6);
-      box-shadow: 0 8px 22px rgba(109,40,217,.32), inset 0 1px 0 rgba(255,255,255,.28);
-    }
-
-    .quip-logo svg {
-      width: 23px;
-      fill: rgba(255,255,255,.1);
-      stroke: white;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      stroke-width: 1.8;
+      color: var(--action);
+      font-size: 23px;
+      font-weight: 600;
+      line-height: 1;
     }
 
     .quip-brand > span:last-child {
@@ -133,54 +112,50 @@ export function getDialogStyles(): string {
     }
 
     .quip-brand strong {
-      font-size: 15px;
-      font-weight: 680;
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 600;
       letter-spacing: -.01em;
     }
 
     .quip-brand small {
-      margin-top: 3px;
+      margin-top: 2px;
       color: var(--muted);
-      font-size: 11px;
+      font-size: 10px;
     }
 
     .quip-header-actions {
       gap: 6px;
     }
 
-    .quip-plan-pill,
+    .quip-model-pill,
     .quip-icon-button,
     .quip-context-details-button,
     .quip-message-meta button,
     .quip-error button,
-    .quip-quota-gate button,
     .quip-composer-footer button {
       border: 0;
       cursor: pointer;
     }
 
-    .quip-plan-pill {
+    .quip-model-pill {
       display: flex;
       align-items: center;
-      max-width: 220px;
-      height: 30px;
+      max-width: 250px;
       gap: 7px;
       overflow: hidden;
-      padding: 0 10px;
-      border: 1px solid rgba(167,139,250,.18);
-      border-radius: 999px;
-      background: rgba(124,58,237,.1);
-      color: var(--purple-300);
-      font-size: 11px;
-      font-weight: 600;
+      padding: 4px 0;
+      border-bottom: 1px solid var(--ui-active);
+      background: transparent;
+      color: var(--muted);
+      font-size: 10px;
       text-overflow: ellipsis;
       white-space: nowrap;
-      transition: background 150ms, border-color 150ms;
     }
 
-    .quip-plan-pill:hover {
-      border-color: rgba(167,139,250,.38);
-      background: rgba(124,58,237,.18);
+    .quip-model-pill:hover {
+      border-color: var(--action);
+      color: var(--action);
     }
 
     .quip-status-dot {
@@ -188,25 +163,35 @@ export function getDialogStyles(): string {
       width: 6px;
       height: 6px;
       border-radius: 50%;
-      background: var(--purple-400);
-      box-shadow: 0 0 0 3px rgba(167,139,250,.1);
+      background: var(--action);
     }
 
     .quip-icon-button {
       display: grid;
-      width: 32px;
-      height: 32px;
+      width: 30px;
+      height: 30px;
       padding: 0;
       place-items: center;
-      border-radius: 9px;
+      border-radius: 3px;
       background: transparent;
-      color: #777180;
-      transition: color 150ms, background 150ms;
+      color: var(--muted);
     }
 
     .quip-icon-button:hover {
-      background: rgba(255,255,255,.06);
-      color: var(--text);
+      background: var(--paper-secondary);
+      color: var(--action);
+    }
+
+    .quip-model-pill:focus-visible,
+    .quip-icon-button:focus-visible,
+    .quip-context-details-button:focus-visible,
+    .quip-prompt-grid button:focus-visible,
+    .quip-message-meta button:focus-visible,
+    .quip-error button:focus-visible,
+    .quip-send-button:focus-visible,
+    .quip-composer-footer button:focus-visible {
+      outline: 2px solid var(--action);
+      outline-offset: 2px;
     }
 
     .quip-icon-button svg,
@@ -225,7 +210,7 @@ export function getDialogStyles(): string {
     }
 
     .quip-icon-button svg {
-      width: 17px;
+      width: 16px;
     }
 
     .quip-context-bar {
@@ -234,14 +219,14 @@ export function getDialogStyles(): string {
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      padding: 11px 18px;
-      border-bottom: 1px solid var(--border);
-      background: rgba(24, 22, 31, .7);
+      padding: 10px 18px;
+      border-bottom: 1px solid var(--ui);
+      background: var(--paper-secondary);
     }
 
     .quip-context-summary {
       min-width: 0;
-      gap: 10px;
+      gap: 9px;
       padding: 0;
       border: 0;
       background: transparent;
@@ -256,17 +241,14 @@ export function getDialogStyles(): string {
     .quip-context-icon {
       display: grid;
       flex: 0 0 auto;
-      width: 30px;
-      height: 30px;
+      width: 25px;
+      height: 25px;
       place-items: center;
-      border: 1px solid rgba(167,139,250,.16);
-      border-radius: 9px;
-      background: rgba(124,58,237,.09);
-      color: var(--purple-400);
+      color: var(--action);
     }
 
     .quip-context-icon svg {
-      width: 16px;
+      width: 15px;
     }
 
     .quip-context-copy {
@@ -277,24 +259,24 @@ export function getDialogStyles(): string {
     }
 
     .quip-context-copy strong {
-      color: var(--text-soft);
-      font-size: 11px;
-      font-weight: 650;
+      color: var(--ink);
+      font-size: 10px;
+      font-weight: 550;
     }
 
     .quip-context-copy span {
-      max-width: 390px;
-      margin-top: 3px;
+      max-width: 420px;
+      margin-top: 2px;
       overflow: hidden;
-      color: #777180;
-      font-size: 10px;
+      color: var(--muted);
+      font-size: 9px;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
     .quip-chevron {
-      width: 14px;
-      color: #696273;
+      width: 13px;
+      color: var(--muted);
       transition: transform 160ms;
     }
 
@@ -304,157 +286,164 @@ export function getDialogStyles(): string {
 
     .quip-context-details-button {
       flex: 0 0 auto;
-      padding: 5px 8px;
-      border-radius: 7px;
+      padding: 3px 0;
+      border-bottom: 1px solid var(--ui-active);
       background: transparent;
-      color: #777180;
-      font-size: 10px;
+      color: var(--muted);
+      font-size: 9px;
     }
 
     .quip-context-details-button:hover {
-      background: rgba(255,255,255,.05);
-      color: var(--text-soft);
+      border-color: var(--action);
+      color: var(--action);
     }
 
     .quip-context-panel {
       display: grid;
       flex: 0 0 auto;
-      gap: 12px;
-      max-height: 280px;
+      gap: 16px;
+      max-height: 290px;
       overflow-y: auto;
-      padding: 12px 18px 14px;
-      border-bottom: 1px solid var(--border);
-      background: #0d0c11;
+      padding: 16px 18px 18px;
+      border-bottom: 1px solid var(--ui);
+      background: var(--paper-secondary);
       animation: quip-panel-in 150ms ease-out;
     }
 
     .quip-eyebrow,
     .quip-context-grid span {
-      color: #777180;
+      color: var(--muted);
       font-size: 9px;
-      font-weight: 700;
-      letter-spacing: .08em;
-      text-transform: uppercase;
+      font-weight: 500;
     }
 
     .quip-selection-preview {
-      max-height: 88px;
+      max-height: 96px;
       margin: 7px 0 0;
       overflow-y: auto;
-      color: #aaa4b1;
-      font-family: "SFMono-Regular", Consolas, monospace;
-      font-size: 10px;
-      line-height: 1.65;
+      color: var(--ink);
+      font-size: 11px;
+      line-height: 1.55;
       white-space: pre-wrap;
     }
 
     .quip-context-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
+      border-top: 1px solid var(--ui);
+      border-bottom: 1px solid var(--ui);
     }
 
     .quip-context-grid > div {
       display: flex;
+      min-width: 0;
       flex-direction: column;
-      gap: 4px;
+      gap: 3px;
       padding: 9px 10px;
-      border: 1px solid var(--border);
-      border-radius: 9px;
-      background: rgba(255,255,255,.025);
+      border-right: 1px solid var(--ui);
+    }
+
+    .quip-context-grid > div:last-child {
+      border-right: 0;
     }
 
     .quip-context-grid strong {
-      color: var(--text-soft);
-      font-size: 11px;
-      font-weight: 550;
+      overflow: hidden;
+      color: var(--ink);
+      font-size: 10px;
+      font-variant-numeric: tabular-nums;
+      font-weight: 500;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .quip-context-preview {
       display: grid;
-      gap: 8px;
+      gap: 0;
+    }
+
+    .quip-context-preview > .quip-eyebrow {
+      margin-bottom: 7px;
     }
 
     .quip-context-preview article {
-      padding: 9px 10px;
-      border: 1px solid var(--border);
-      border-radius: 9px;
-      background: rgba(255,255,255,.025);
+      padding: 9px 0;
+      border-top: 1px solid var(--ui);
+      background: transparent;
     }
 
     .quip-context-preview article strong {
-      color: #a78bfa;
+      color: var(--action);
       font-size: 9px;
-      font-weight: 650;
+      font-weight: 550;
       text-transform: capitalize;
     }
 
     .quip-context-preview article p,
     .quip-context-empty {
-      margin: 5px 0 0;
-      color: #aaa4b1;
-      font-family: "SFMono-Regular", Consolas, monospace;
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       font-size: 9px;
-      line-height: 1.55;
+      line-height: 1.5;
       white-space: pre-wrap;
     }
 
     .quip-context-payload {
-      border: 1px solid var(--border);
-      border-radius: 9px;
-      background: rgba(255,255,255,.02);
+      border-top: 1px solid var(--ui);
+      border-bottom: 1px solid var(--ui);
+      background: transparent;
     }
 
     .quip-context-payload summary {
-      padding: 8px 10px;
-      color: #8f8997;
+      padding: 8px 0;
+      color: var(--muted);
       cursor: pointer;
       font-size: 9px;
+    }
+
+    .quip-context-payload summary:hover {
+      color: var(--action);
     }
 
     .quip-context-payload pre {
       max-height: 180px;
       margin: 0;
       overflow: auto;
-      padding: 0 10px 10px;
-      color: #aaa4b1;
-      font-family: "SFMono-Regular", Consolas, monospace;
-      font-size: 8px;
+      padding: 0 0 10px;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 9px;
       line-height: 1.5;
       white-space: pre-wrap;
       word-break: break-word;
     }
 
     .quip-chat {
-      min-height: 230px;
+      min-height: 250px;
       flex: 1 1 auto;
       overflow-y: auto;
       overscroll-behavior: contain;
-      padding: 22px 22px 18px;
+      padding: 24px 24px 22px;
       scroll-behavior: smooth;
     }
 
     .quip-empty-state {
       display: flex;
-      min-height: 285px;
-      align-items: center;
+      min-height: 300px;
+      align-items: flex-start;
       justify-content: center;
       flex-direction: column;
-      text-align: center;
+      text-align: left;
     }
 
     .quip-empty-orb {
       position: relative;
       display: grid;
-      width: 48px;
-      height: 48px;
-      margin-bottom: 15px;
+      width: 28px;
+      height: 28px;
+      margin-bottom: 14px;
       place-items: center;
-      border: 1px solid rgba(196,181,253,.25);
-      border-radius: 16px;
-      background: radial-gradient(circle at 35% 25%, #a78bfa, #6d28d9 52%, #3b0764);
-      box-shadow: 0 12px 34px rgba(109,40,217,.28), inset 0 1px 1px rgba(255,255,255,.35);
-      transform: rotate(-5deg);
     }
 
     .quip-empty-orb::after,
@@ -462,101 +451,106 @@ export function getDialogStyles(): string {
     .quip-empty-orb span {
       position: absolute;
       content: "";
-      border-radius: 50%;
-      background: white;
+      background: var(--action);
     }
 
     .quip-empty-orb::before {
-      width: 15px;
-      height: 2px;
+      width: 22px;
+      height: 1px;
       transform: rotate(45deg);
     }
 
     .quip-empty-orb::after {
-      width: 2px;
-      height: 15px;
+      width: 1px;
+      height: 22px;
       transform: rotate(45deg);
     }
 
     .quip-empty-orb span {
-      top: 9px;
-      right: 9px;
+      top: 1px;
+      right: 1px;
       width: 4px;
       height: 4px;
-      opacity: .75;
+      border-radius: 50%;
     }
 
     .quip-empty-state h2 {
       margin: 0;
-      color: var(--text);
-      font-size: 17px;
-      font-weight: 660;
+      color: var(--ink);
+      font-size: 21px;
+      font-weight: 500;
       letter-spacing: -.02em;
+      line-height: 1.25;
     }
 
     .quip-empty-state > p {
-      max-width: 420px;
-      margin: 7px 0 17px;
+      max-width: 470px;
+      margin: 7px 0 22px;
       color: var(--muted);
       font-size: 12px;
     }
 
     .quip-prompt-grid {
       display: grid;
-      width: min(100%, 510px);
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
+      width: min(100%, 520px);
+      border-top: 1px solid var(--ui);
     }
 
     .quip-prompt-grid button {
       display: flex;
-      min-height: 56px;
+      min-height: 42px;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
-      padding: 10px 11px;
-      border: 1px solid var(--border);
-      border-radius: 11px;
-      background: rgba(255,255,255,.025);
-      color: #aaa4b1;
+      gap: 12px;
+      padding: 9px 2px;
+      border: 0;
+      border-bottom: 1px solid var(--ui);
+      background: transparent;
+      color: var(--ink);
       cursor: pointer;
-      font-size: 10px;
+      font-size: 11px;
       text-align: left;
-      transition: transform 150ms, border-color 150ms, background 150ms, color 150ms;
     }
 
     .quip-prompt-grid button:hover {
-      border-color: var(--border-strong);
-      background: rgba(124,58,237,.08);
-      color: var(--purple-300);
-      transform: translateY(-1px);
+      color: var(--action);
+    }
+
+    .quip-prompt-grid button span {
+      text-decoration: underline;
+      text-decoration-color: var(--ui-active);
+      text-underline-offset: 3px;
+    }
+
+    .quip-prompt-grid button:hover span {
+      text-decoration-color: var(--action);
     }
 
     .quip-prompt-grid svg {
       flex: 0 0 auto;
       width: 13px;
+      color: var(--muted);
     }
 
     .quip-message {
       align-items: flex-start;
-      gap: 11px;
+      gap: 12px;
       animation: quip-message-in 180ms ease-out;
     }
 
     .quip-message + .quip-message {
-      margin-top: 22px;
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid var(--ui);
     }
 
     .quip-message-avatar {
       display: grid;
       flex: 0 0 auto;
-      width: 28px;
-      height: 28px;
+      width: 24px;
+      height: 24px;
       place-items: center;
-      border: 1px solid var(--border);
-      border-radius: 9px;
-      background: var(--surface-soft);
-      color: #98919f;
+      color: var(--muted);
     }
 
     .quip-message-avatar svg {
@@ -564,55 +558,49 @@ export function getDialogStyles(): string {
     }
 
     .quip-message-assistant .quip-message-avatar {
-      border-color: rgba(167,139,250,.28);
-      background: linear-gradient(145deg, #7c3aed, #5b21b6);
-      color: white;
-      box-shadow: 0 7px 18px rgba(109,40,217,.2);
+      color: var(--action);
     }
 
     .quip-message-avatar span {
-      font-size: 11px;
-      font-weight: 750;
+      font-size: 13px;
+      font-weight: 600;
     }
 
     .quip-message-body {
       min-width: 0;
       flex: 1;
-      padding-top: 2px;
     }
 
     .quip-message-meta {
       min-height: 22px;
       justify-content: space-between;
-      margin-bottom: 4px;
+      margin-bottom: 5px;
     }
 
     .quip-message-meta strong {
-      color: #a9a3b1;
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: .045em;
-      text-transform: uppercase;
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 550;
     }
 
     .quip-message-assistant .quip-message-meta strong {
-      color: var(--purple-400);
+      color: var(--action);
     }
 
     .quip-message-meta button {
       display: flex;
       align-items: center;
       gap: 5px;
-      padding: 4px 6px;
-      border-radius: 6px;
+      padding: 3px 0;
+      border-bottom: 1px solid transparent;
       background: transparent;
-      color: #6e6877;
+      color: var(--muted);
       font-size: 9px;
     }
 
     .quip-message-meta button:hover {
-      background: rgba(255,255,255,.05);
-      color: var(--text-soft);
+      border-color: var(--action);
+      color: var(--action);
     }
 
     .quip-message-meta button svg {
@@ -621,7 +609,7 @@ export function getDialogStyles(): string {
 
     .quip-thinking {
       margin-left: auto;
-      color: #6e6877;
+      color: var(--muted);
       font-size: 9px;
     }
 
@@ -631,18 +619,18 @@ export function getDialogStyles(): string {
     }
 
     .quip-message-content {
-      color: #d2cdd7;
-      font-size: 12px;
-      line-height: 1.75;
+      color: var(--ink);
+      font-size: 13px;
+      line-height: 1.6;
       overflow-wrap: anywhere;
     }
 
     .quip-message-user .quip-message-content {
-      color: #b9b3c0;
+      color: var(--muted);
     }
 
     .quip-message-content p {
-      margin: 0 0 9px;
+      margin: 0 0 10px;
     }
 
     .quip-message-content p:last-child {
@@ -659,73 +647,85 @@ export function getDialogStyles(): string {
       margin-top: 4px;
     }
 
+    .quip-message-content li::marker {
+      color: var(--faint);
+    }
+
     .quip-message-content h1,
     .quip-message-content h2,
     .quip-message-content h3 {
-      margin: 15px 0 7px;
-      color: var(--text);
-      font-size: 13px;
-      line-height: 1.35;
+      margin: 18px 0 7px;
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 550;
+      letter-spacing: -.015em;
+      line-height: 1.3;
     }
 
     .quip-message-content code {
-      padding: 2px 5px;
-      border: 1px solid rgba(255,255,255,.06);
-      border-radius: 5px;
-      background: #25212d;
-      color: #d8b4fe;
-      font-family: "SFMono-Regular", Consolas, monospace;
-      font-size: 10px;
+      padding: 1px 3px;
+      border-radius: 3px;
+      background: var(--paper-secondary);
+      color: var(--ink);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 11px;
     }
 
     .quip-message-content pre {
-      margin: 10px 0;
+      margin: 12px 0;
       overflow-x: auto;
-      padding: 11px 12px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: #0a090d;
+      padding: 12px;
+      border: 1px solid var(--ui);
+      border-radius: 4px;
+      background: var(--paper-secondary);
     }
 
     .quip-message-content pre code {
       padding: 0;
-      border: 0;
       background: transparent;
-      color: #cfc9d5;
     }
 
     .quip-message-content blockquote {
-      margin: 10px 0;
-      padding: 4px 0 4px 12px;
-      border-left: 2px solid var(--purple-600);
-      color: #aaa4b1;
+      margin: 12px 0;
+      padding: 3px 0 3px 14px;
+      border-left: 2px solid var(--ink);
+      color: var(--muted);
     }
 
     .quip-message-content a {
-      color: var(--purple-300);
-      text-decoration: none;
+      color: var(--ink);
+      text-decoration: underline;
+      text-decoration-color: var(--ui-active);
+      text-underline-offset: 2px;
     }
 
     .quip-message-content a:hover {
-      text-decoration: underline;
+      color: var(--action);
+      text-decoration-color: var(--action);
     }
 
     .quip-message-content table {
       width: 100%;
-      margin: 10px 0;
+      margin: 12px 0;
       border-collapse: collapse;
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .quip-message-content tr {
+      border-bottom: 1px solid var(--ui);
     }
 
     .quip-message-content th,
     .quip-message-content td {
-      padding: 7px 8px;
-      border: 1px solid var(--border);
+      padding: 7px 10px 7px 0;
+      border: 0;
       text-align: left;
     }
 
     .quip-message-content th {
-      background: var(--surface-soft);
-      color: var(--text);
+      color: var(--ink);
+      font-weight: 600;
     }
 
     .quip-typing {
@@ -736,10 +736,10 @@ export function getDialogStyles(): string {
     }
 
     .quip-typing span {
-      width: 5px;
-      height: 5px;
+      width: 4px;
+      height: 4px;
       border-radius: 50%;
-      background: var(--purple-400);
+      background: var(--action);
       animation: quip-bounce 1s infinite ease-in-out;
     }
 
@@ -750,12 +750,11 @@ export function getDialogStyles(): string {
       display: flex;
       align-items: center;
       gap: 9px;
-      margin-top: 18px;
+      margin-top: 20px;
       padding: 10px 11px;
-      border: 1px solid rgba(248,113,113,.2);
-      border-radius: 10px;
-      background: rgba(127,29,29,.14);
-      color: #fca5a5;
+      border-left: 2px solid var(--negative);
+      background: var(--negative-wash);
+      color: var(--negative);
       font-size: 10px;
     }
 
@@ -769,97 +768,56 @@ export function getDialogStyles(): string {
     }
 
     .quip-error-icon svg {
-      width: 16px;
+      width: 15px;
     }
 
     .quip-error button {
       flex: 0 0 auto;
-      padding: 5px 8px;
-      border-radius: 6px;
-      background: rgba(248,113,113,.12);
-      color: #fecaca;
+      padding: 4px 0;
+      border-bottom: 1px solid currentColor;
+      background: transparent;
+      color: inherit;
       font-size: 9px;
-      font-weight: 650;
     }
 
     .quip-composer-wrap {
       flex: 0 0 auto;
-      padding: 12px 18px 13px;
-      border-top: 1px solid var(--border);
-      background: rgba(17,16,22,.97);
-      box-shadow: 0 -14px 30px rgba(0,0,0,.14);
-    }
-
-    .quip-quota-gate {
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 10px;
-      padding: 10px 11px;
-      border: 1px solid rgba(167,139,250,.2);
-      border-radius: 11px;
-      background: rgba(124,58,237,.1);
-    }
-
-    .quip-quota-gate div {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .quip-quota-gate strong {
-      color: var(--purple-300);
-      font-size: 10px;
-    }
-
-    .quip-quota-gate span {
-      margin-top: 2px;
-      color: #8d8797;
-      font-size: 9px;
-    }
-
-    .quip-quota-gate button {
-      flex: 0 0 auto;
-      padding: 7px 9px;
-      border-radius: 7px;
-      background: var(--purple-600);
-      color: white;
-      font-size: 9px;
-      font-weight: 650;
+      padding: 13px 18px 12px;
+      border-top: 1px solid var(--ui);
+      background: var(--paper);
     }
 
     .quip-composer {
       display: flex;
       align-items: flex-end;
-      gap: 8px;
-      padding: 8px 8px 8px 12px;
-      border: 1px solid rgba(255,255,255,.12);
-      border-radius: 13px;
-      background: #0b0a0e;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.02);
-      transition: border-color 150ms, box-shadow 150ms;
+      gap: 9px;
+      padding: 4px 0 5px;
+      border-bottom: 1px solid var(--ui-active);
+      background: transparent;
+      transition: border-color 120ms;
     }
 
     .quip-composer:focus-within {
-      border-color: rgba(167,139,250,.48);
-      box-shadow: 0 0 0 3px rgba(124,58,237,.1);
+      border-color: var(--action);
     }
 
     .quip-composer textarea {
-      min-height: 30px;
+      min-height: 31px;
       max-height: 132px;
       flex: 1;
       resize: none;
-      padding: 6px 0 4px;
+      padding: 6px 0 3px;
       overflow-y: auto;
       border: 0;
       outline: 0;
       background: transparent;
-      color: var(--text);
+      color: var(--ink);
       font-size: 12px;
-      line-height: 1.55;
+      line-height: 1.5;
     }
 
     .quip-composer textarea::placeholder {
-      color: #5f5967;
+      color: var(--muted);
     }
 
     .quip-composer textarea:disabled {
@@ -869,58 +827,54 @@ export function getDialogStyles(): string {
 
     .quip-send-button {
       display: grid;
-      width: 34px;
-      height: 34px;
+      width: 32px;
+      height: 32px;
       flex: 0 0 auto;
       padding: 0;
       place-items: center;
-      border: 0;
-      border-radius: 10px;
-      background: linear-gradient(145deg, #8b5cf6, #6d28d9);
-      box-shadow: 0 7px 18px rgba(109,40,217,.24), inset 0 1px 0 rgba(255,255,255,.22);
-      color: white;
+      border: 1px solid var(--ink);
+      border-radius: 3px;
+      background: var(--ink);
+      color: var(--paper);
       cursor: pointer;
-      transition: transform 150ms, filter 150ms, opacity 150ms;
     }
 
     .quip-send-button:hover:not(:disabled) {
-      filter: brightness(1.08);
-      transform: translateY(-1px);
+      border-color: var(--action);
+      background: var(--action);
     }
 
     .quip-send-button:disabled {
       cursor: not-allowed;
-      opacity: .34;
-      box-shadow: none;
+      opacity: .25;
     }
 
     .quip-send-button svg {
-      width: 16px;
+      width: 15px;
     }
 
     .quip-spinner {
-      width: 14px;
-      height: 14px;
-      border: 2px solid rgba(255,255,255,.28);
-      border-top-color: white;
+      width: 13px;
+      height: 13px;
+      border: 2px solid rgba(var(--paper-rgb), .3);
+      border-top-color: var(--paper);
       border-radius: 50%;
       animation: quip-spin .7s linear infinite;
     }
 
     .quip-composer-footer {
       justify-content: space-between;
-      margin-top: 7px;
-      padding: 0 2px;
-      color: #5f5967;
-      font-size: 8px;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 9px;
     }
 
     .quip-composer-footer kbd {
       padding: 1px 3px;
-      border: 1px solid rgba(255,255,255,.09);
+      border: 1px solid var(--ui-active);
       border-radius: 3px;
-      background: rgba(255,255,255,.035);
-      color: #827b8b;
+      background: var(--paper-secondary);
+      color: var(--muted);
       font-family: inherit;
     }
 
@@ -931,13 +885,15 @@ export function getDialogStyles(): string {
 
     .quip-composer-footer button {
       padding: 2px 0;
+      border-bottom: 1px solid transparent;
       background: transparent;
-      color: #716a79;
-      font-size: 8px;
+      color: var(--muted);
+      font-size: 9px;
     }
 
     .quip-composer-footer button:hover {
-      color: var(--purple-400);
+      border-color: var(--action);
+      color: var(--action);
     }
 
     .quip-chat::-webkit-scrollbar,
@@ -962,8 +918,7 @@ export function getDialogStyles(): string {
     .quip-selection-preview::-webkit-scrollbar-thumb,
     .quip-composer textarea::-webkit-scrollbar-thumb,
     .quip-message-content pre::-webkit-scrollbar-thumb {
-      border-radius: 99px;
-      background: #35303c;
+      background: var(--ui-active);
     }
 
     @keyframes quip-overlay-in {
@@ -971,8 +926,8 @@ export function getDialogStyles(): string {
     }
 
     @keyframes quip-dialog-in {
-      from { opacity: 0; transform: translateY(-8px) scale(.985); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     @keyframes quip-panel-in {
@@ -980,7 +935,7 @@ export function getDialogStyles(): string {
     }
 
     @keyframes quip-message-in {
-      from { opacity: 0; transform: translateY(5px); }
+      from { opacity: 0; }
     }
 
     @keyframes quip-bounce {
@@ -997,23 +952,52 @@ export function getDialogStyles(): string {
       to { transform: rotate(360deg); }
     }
 
+    @media (prefers-color-scheme: dark) {
+      :host {
+        color-scheme: dark;
+      }
+
+      .quip-overlay {
+        --paper: #100f0f;
+        --paper-rgb: 16, 15, 15;
+        --paper-secondary: #1c1b1a;
+        --ink: #cecdc3;
+        --muted: #878580;
+        --faint: #575653;
+        --ui: #282726;
+        --ui-hover: #343331;
+        --ui-active: #403e3c;
+        --action: #3aa99f;
+        --action-hover: #24837b;
+        --action-wash: #101f1d;
+        --positive: #879a39;
+        --negative: #d14d41;
+        --negative-wash: #261312;
+        background: rgba(16, 15, 15, .72);
+      }
+
+      ::selection {
+        background: rgba(30, 95, 91, .45);
+      }
+    }
+
     @media (max-width: 620px) {
       .quip-overlay {
         align-items: flex-end;
-        padding: 12px;
+        padding: 10px;
       }
 
       .quip-dialog {
-        max-height: calc(100vh - 24px);
-        border-radius: 18px;
+        max-height: calc(100vh - 20px);
+        border-radius: 6px;
       }
 
       .quip-header {
-        min-height: 62px;
-        padding: 11px 13px;
+        padding-right: 13px;
+        padding-left: 13px;
       }
 
-      .quip-plan-pill {
+      .quip-model-pill {
         max-width: 116px;
       }
 
@@ -1024,20 +1008,24 @@ export function getDialogStyles(): string {
       }
 
       .quip-chat {
-        padding-right: 15px;
-        padding-left: 15px;
-      }
-
-      .quip-prompt-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .quip-prompt-grid button {
-        min-height: 42px;
+        padding-right: 16px;
+        padding-left: 16px;
       }
 
       .quip-context-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .quip-context-grid > div:nth-child(2) {
+        border-right: 0;
+      }
+
+      .quip-context-grid > div:nth-child(-n + 2) {
+        border-bottom: 1px solid var(--ui);
+      }
+
+      .quip-empty-state h2 {
+        font-size: 19px;
       }
     }
 

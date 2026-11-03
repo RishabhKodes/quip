@@ -1,19 +1,24 @@
 import { callOpenAI, streamOpenAI } from "./openaiClient.js";
 import { callAnthropic, streamAnthropic } from "./anthropicClient.js";
-import type { AskAIResponse } from "@quip/shared";
+import type { AskAIResponse, LlmProvider } from "@quip/shared";
 import type { ChatMessage } from "../context/buildPrompt.js";
-
-export type LlmProvider = "openai" | "anthropic";
 
 export interface LlmRequestConfig {
   provider?: LlmProvider;
   apiKey?: string;
   model?: string;
+  baseUrl?: string;
 }
 
 function getProvider(config?: LlmRequestConfig): LlmProvider {
   const provider = config?.provider || process.env.LLM_PROVIDER || "openai";
-  if (provider === "openai" || provider === "anthropic") return provider;
+  if (
+    provider === "openai" ||
+    provider === "anthropic" ||
+    provider === "local"
+  ) {
+    return provider;
+  }
   throw new Error(`Unsupported LLM provider: ${provider}`);
 }
 
@@ -23,7 +28,9 @@ export async function callLLM(
 ): Promise<AskAIResponse> {
   const provider = getProvider(config);
 
-  if (provider === "openai") return callOpenAI(messages, config);
+  if (provider === "openai" || provider === "local") {
+    return callOpenAI(messages, config);
+  }
   return callAnthropic(messages, config);
 }
 
@@ -33,7 +40,7 @@ export async function* streamLLM(
 ): AsyncGenerator<string> {
   const provider = getProvider(config);
 
-  if (provider === "openai") {
+  if (provider === "openai" || provider === "local") {
     yield* streamOpenAI(messages, config);
     return;
   }
