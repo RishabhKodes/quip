@@ -354,6 +354,10 @@ docs/
 
 ## Contributing
 
+I'm working on adding support for more LLM providers and existing AI subscriptions.
+If you'd like support for a particular provider, subscription, or integration,
+please feel free to open a PR!
+
 See [CONTRIBUTING.md](CONTRIBUTING.md). By participating, you agree to follow
 [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
