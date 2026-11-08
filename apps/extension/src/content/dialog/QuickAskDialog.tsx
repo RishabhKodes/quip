@@ -89,8 +89,10 @@ export function QuickAskDialog({
   );
 
   useEffect(() => {
-    document.addEventListener("keydown", handleKeyDown, true);
-    return () => document.removeEventListener("keydown", handleKeyDown, true);
+    const dialogDocument = textareaRef.current?.ownerDocument;
+    dialogDocument?.addEventListener("keydown", handleKeyDown, true);
+    return () =>
+      dialogDocument?.removeEventListener("keydown", handleKeyDown, true);
   }, [handleKeyDown]);
 
   async function ask(promptOverride?: string) {
