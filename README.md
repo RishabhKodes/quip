@@ -1,4 +1,4 @@
-# Quip - Quick Page AI
+# Quip — Ask AI About Any Webpage
 
 Quip is a Chrome extension for asking questions about selected text or the page
 you are viewing. The repository contains a Manifest V3 extension, a Fastify API,
