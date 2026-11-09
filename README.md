@@ -147,8 +147,9 @@ Open a normal `http://` or `https://` page and use any of these entry points:
 - Open the extension and select **Open quip**.
 
 Type a question and press `Enter`. Use `Shift+Enter` for a new line and `Esc`
-to close the dialog. **Context details** shows the extracted payload and, after
-a request, the page sections selected for that question.
+to close the dialog. Click the page title above the chat to inspect the selected
+text and page sections. After a request, this shows the sections sent for that
+question. The settings icon in the header opens model settings.
 
 ## Development Workflow
 

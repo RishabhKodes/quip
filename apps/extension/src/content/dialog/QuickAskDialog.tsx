@@ -27,17 +27,9 @@ interface Props {
   onClose: () => void;
 }
 
-const SELECTION_PROMPTS = [
-  "Summarize this selection",
-  "Explain it simply",
-  "What are the key takeaways?",
-];
+const SELECTION_PROMPTS = ["Summarize this selection", "Explain it simply"];
 
-const PAGE_PROMPTS = [
-  "Summarize this page",
-  "What matters most here?",
-  "List the key action items",
-];
+const PAGE_PROMPTS = ["Summarize this page", "What are the key takeaways?"];
 
 export function QuickAskDialog({
   selectedText,
@@ -51,7 +43,6 @@ export function QuickAskDialog({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showContext, setShowContext] = useState(false);
-  const [showSelection, setShowSelection] = useState(false);
   const [copiedMessage, setCopiedMessage] = useState<number | null>(null);
   const [lastSentChunks, setLastSentChunks] = useState<
     PageContextChunk[] | null
@@ -279,14 +270,6 @@ export function QuickAskDialog({
   }
 
   const prompts = selectedText ? SELECTION_PROMPTS : PAGE_PROMPTS;
-  const providerLabel =
-    settings.provider === "openai"
-      ? "OpenAI"
-      : settings.provider === "anthropic"
-        ? "Anthropic"
-        : "Local";
-  const resolvedModel =
-    settings.model.trim() || DEFAULT_MODELS[settings.provider];
   const pageLabel = initialContext.title || getHostname(initialContext.url);
   const contextPreviewChunks =
     lastSentChunks === null ? initialContext.chunks || [] : lastSentChunks;
@@ -313,27 +296,27 @@ export function QuickAskDialog({
             <span className="quip-logo" aria-hidden="true">
               q
             </span>
-            <span>
-              <strong>quip</strong>
-              <small>Ask the page</small>
-            </span>
+            <strong>quip</strong>
           </div>
 
           <div className="quip-header-actions">
             <button
-              className="quip-model-pill"
+              className="quip-icon-button"
               onClick={openSettings}
               title="Open model settings"
+              aria-label="Open model settings"
             >
-              <span className="quip-status-dot" />
-              {settings.useOwnKey
-                ? `${providerLabel} · ${resolvedModel}${settings.model.trim() ? "" : " (default)"}`
-                : "Self-hosted server"}
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 7h16M4 17h16" />
+                <circle cx="9" cy="7" r="3" />
+                <circle cx="15" cy="17" r="3" />
+              </svg>
             </button>
             {conversation.length > 0 && (
               <button
                 className="quip-icon-button"
                 onClick={clearChat}
+                disabled={loading}
                 title="Clear conversation"
                 aria-label="Clear conversation"
               >
@@ -358,10 +341,13 @@ export function QuickAskDialog({
         <div className="quip-context-bar">
           <button
             className="quip-context-summary"
-            onClick={() => setShowSelection(!showSelection)}
-            disabled={!selectedText}
+            onClick={() => setShowContext((visible) => !visible)}
+            aria-expanded={showContext}
+            aria-controls="quip-context-panel"
+            aria-label={`Context details: ${pageLabel}${selectedText ? " (selection attached)" : ""}`}
+            title={pageLabel}
           >
-            <span className="quip-context-icon">
+            <span className="quip-context-icon" aria-hidden="true">
               {selectedText ? (
                 <svg viewBox="0 0 24 24">
                   <path d="M7 4H5a1 1 0 0 0-1 1v2m13-3h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2m13 3h2a1 1 0 0 0 1-1v-2M8 9h8m-8 3h8m-8 3h5" />
@@ -372,32 +358,23 @@ export function QuickAskDialog({
                 </svg>
               )}
             </span>
-            <span className="quip-context-copy">
-              <strong>
-                {selectedText ? "Selection attached" : "Page context attached"}
-              </strong>
-              <span>{pageLabel}</span>
-            </span>
+            <span className="quip-context-copy">{pageLabel}</span>
             {selectedText && (
-              <svg
-                className={`quip-chevron ${showSelection ? "is-open" : ""}`}
-                viewBox="0 0 24 24"
-              >
-                <path d="m9 6 6 6-6 6" />
-              </svg>
+              <span className="quip-context-label">Selection</span>
             )}
-          </button>
-          <button
-            className="quip-context-details-button"
-            onClick={() => setShowContext(!showContext)}
-          >
-            {showContext ? "Hide details" : "Context details"}
+            <svg
+              className={`quip-chevron ${showContext ? "is-open" : ""}`}
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path d="m9 6 6 6-6 6" />
+            </svg>
           </button>
         </div>
 
-        {(showSelection || showContext) && (
-          <div className="quip-context-panel">
-            {showSelection && selectedText && (
+        {showContext && (
+          <div className="quip-context-panel" id="quip-context-panel">
+            {selectedText && (
               <div>
                 <span className="quip-eyebrow">Selected text</span>
                 <p className="quip-selection-preview">
@@ -405,85 +382,44 @@ export function QuickAskDialog({
                 </p>
               </div>
             )}
-            {showContext && (
-              <div className="quip-context-grid">
-                <div>
-                  <span>Source</span>
-                  <strong>{initialContext.adapter || "Web page"}</strong>
-                </div>
-                <div>
-                  <span>Extracted sections</span>
-                  <strong>
-                    {(initialContext.chunks?.length || 0).toLocaleString()}
-                  </strong>
-                </div>
-                <div>
-                  <span>Nearby context</span>
-                  <strong>
-                    {(initialContext.nearbyText?.length || 0).toLocaleString()}{" "}
-                    chars
-                  </strong>
-                </div>
-                <div>
-                  <span>Fallback text</span>
-                  <strong>
-                    {(initialContext.visibleText?.length || 0).toLocaleString()}{" "}
-                    chars
-                  </strong>
-                </div>
-              </div>
-            )}
-            {showContext && (
-              <div className="quip-context-preview">
-                <span className="quip-eyebrow">{contextPreviewLabel}</span>
-                {contextPreviewChunks.length > 0 ? (
-                  contextPreviewChunks.map((chunk, index) => (
-                    <article key={`${chunk.kind}-${index}`}>
-                      <strong>
-                        {chunk.kind}
-                        {chunk.heading ? ` · ${chunk.heading}` : ""}
-                      </strong>
-                      <p>{chunk.text}</p>
-                    </article>
-                  ))
-                ) : (
-                  <p className="quip-context-empty">
-                    No structured sections were available; quip will use the
-                    fallback page text.
-                  </p>
-                )}
-                <details className="quip-context-payload">
-                  <summary>View raw context payload</summary>
-                  <pre>{JSON.stringify(previewContext, null, 2)}</pre>
-                </details>
-              </div>
-            )}
+            <div className="quip-context-preview">
+              <span className="quip-eyebrow">{contextPreviewLabel}</span>
+              {contextPreviewChunks.length > 0 ? (
+                contextPreviewChunks.map((chunk, index) => (
+                  <article key={`${chunk.kind}-${index}`}>
+                    <strong>
+                      {chunk.kind}
+                      {chunk.heading ? ` · ${chunk.heading}` : ""}
+                    </strong>
+                    <p>{chunk.text}</p>
+                  </article>
+                ))
+              ) : (
+                <p className="quip-context-empty">
+                  No structured sections were available; quip will use the
+                  fallback page text.
+                </p>
+              )}
+              <details className="quip-context-payload">
+                <summary>View raw context payload</summary>
+                <pre>{JSON.stringify(previewContext, null, 2)}</pre>
+              </details>
+            </div>
           </div>
         )}
 
         <main className="quip-chat" ref={chatRef} aria-live="polite">
           {conversation.length === 0 && !currentPrompt && (
             <div className="quip-empty-state">
-              <div className="quip-empty-orb">
-                <span />
-              </div>
               <h2>
                 {selectedText
-                  ? "What would you like to know?"
-                  : "Explore this page with quip"}
+                  ? "Ask about your selection"
+                  : "Ask about this page"}
               </h2>
-              <p>
-                {selectedText
-                  ? "Ask for a summary, explanation, rewrite, or anything else."
-                  : "Ask a focused question and quip will use the page as context."}
-              </p>
               <div className="quip-prompt-grid">
                 {prompts.map((prompt) => (
                   <button key={prompt} onClick={() => choosePrompt(prompt)}>
-                    <span>{prompt}</span>
-                    <svg viewBox="0 0 24 24">
-                      <path d="m9 18 6-6-6-6" />
-                    </svg>
+                    {prompt}
                   </button>
                 ))}
               </div>
@@ -495,7 +431,7 @@ export function QuickAskDialog({
               key={`${entry.role}-${index}`}
               className={`quip-message quip-message-${entry.role}`}
             >
-              <div className="quip-message-avatar">
+              <div className="quip-message-avatar" aria-hidden="true">
                 {entry.role === "user" ? (
                   <svg viewBox="0 0 24 24">
                     <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 8a7 7 0 0 0-14 0" />
@@ -510,23 +446,22 @@ export function QuickAskDialog({
                   {entry.role === "assistant" && (
                     <button
                       onClick={() => void copyAnswer(entry.content, index)}
-                      aria-label="Copy answer"
+                      aria-label={
+                        copiedMessage === index
+                          ? "Answer copied"
+                          : "Copy answer"
+                      }
+                      title={copiedMessage === index ? "Copied" : "Copy answer"}
                     >
                       {copiedMessage === index ? (
-                        <>
-                          <svg viewBox="0 0 24 24">
-                            <path d="m5 12 4 4L19 6" />
-                          </svg>
-                          Copied
-                        </>
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="m5 12 4 4L19 6" />
+                        </svg>
                       ) : (
-                        <>
-                          <svg viewBox="0 0 24 24">
-                            <rect x="9" y="9" width="11" height="11" rx="2" />
-                            <path d="M15 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3" />
-                          </svg>
-                          Copy
-                        </>
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <rect x="9" y="9" width="11" height="11" rx="2" />
+                          <path d="M15 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3" />
+                        </svg>
                       )}
                     </button>
                   )}
@@ -546,7 +481,7 @@ export function QuickAskDialog({
 
           {currentPrompt && (
             <article className="quip-message quip-message-user">
-              <div className="quip-message-avatar">
+              <div className="quip-message-avatar" aria-hidden="true">
                 <svg viewBox="0 0 24 24">
                   <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 8a7 7 0 0 0-14 0" />
                 </svg>
@@ -562,13 +497,12 @@ export function QuickAskDialog({
 
           {currentPrompt && (loading || streamingAnswer) && (
             <article className="quip-message quip-message-assistant">
-              <div className="quip-message-avatar">
+              <div className="quip-message-avatar" aria-hidden="true">
                 <span>q</span>
               </div>
               <div className="quip-message-body">
                 <div className="quip-message-meta">
                   <strong>quip</strong>
-                  {loading && <span className="quip-thinking">Thinking</span>}
                 </div>
                 {streamingAnswer ? (
                   <div
@@ -578,7 +512,11 @@ export function QuickAskDialog({
                     }}
                   />
                 ) : (
-                  <div className="quip-typing" aria-label="quip is thinking">
+                  <div
+                    className="quip-typing"
+                    role="status"
+                    aria-label="quip is thinking"
+                  >
                     <span />
                     <span />
                     <span />
@@ -610,19 +548,23 @@ export function QuickAskDialog({
               onChange={(event) => setQuestion(event.target.value)}
               onKeyDown={handleTextareaKeyDown}
               placeholder={
-                selectedText
-                  ? "Ask about your selection..."
-                  : "Ask anything about this page..."
+                conversation.length > 0
+                  ? "Ask a follow-up..."
+                  : selectedText
+                    ? "Ask about your selection..."
+                    : "Ask about this page..."
               }
               rows={1}
               disabled={loading}
               aria-label="Ask quip"
+              title="Enter to send · Shift+Enter for a new line"
             />
             <button
               className="quip-send-button"
               onClick={() => void ask()}
               disabled={loading || !question.trim()}
               aria-label="Send question"
+              title="Send (Enter)"
             >
               {loading ? (
                 <span className="quip-spinner" />
@@ -631,17 +573,6 @@ export function QuickAskDialog({
                   <path d="m5 12 14-7-4 14-3-6-7-1Zm7 1 7-8" />
                 </svg>
               )}
-            </button>
-          </div>
-          <div className="quip-composer-footer">
-            <span>
-              <kbd>Enter</kbd> send <i>·</i> <kbd>Shift</kbd> + <kbd>Enter</kbd>{" "}
-              new line
-            </span>
-            <button onClick={openSettings}>
-              {settings.useOwnKey
-                ? `${providerLabel} · ${settings.model.trim() ? "Custom model" : "Default model"}`
-                : "Model settings"}
             </button>
           </div>
         </footer>
