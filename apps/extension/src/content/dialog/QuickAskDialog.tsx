@@ -48,11 +48,15 @@ export function QuickAskDialog({
     PageContextChunk[] | null
   >(null);
   const [settings, setSettings] = useState<QuipSettings>(DEFAULT_SETTINGS);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const chatRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    void getStoredSettings().then(setSettings);
+    void getStoredSettings().then((storedSettings) => {
+      setSettings(storedSettings);
+      setSettingsLoaded(true);
+    });
     textareaRef.current?.focus();
   }, []);
 
@@ -88,7 +92,7 @@ export function QuickAskDialog({
 
   async function ask(promptOverride?: string) {
     const prompt = (promptOverride ?? question).trim();
-    if (!prompt || loading) return;
+    if (!prompt || loading || !settingsLoaded) return;
 
     const apiUrlError = validateApiUrl(settings.apiUrl);
     if (apiUrlError) {
@@ -101,7 +105,9 @@ export function QuickAskDialog({
       settings.provider !== "local" &&
       !settings.llmApiKey.trim()
     ) {
-      setError("Add your provider API key in quip settings to continue.");
+      setError(
+        "Add a provider key in settings, or choose Self-hosted server to use your .env key.",
+      );
       return;
     }
     if (
@@ -562,7 +568,7 @@ export function QuickAskDialog({
             <button
               className="quip-send-button"
               onClick={() => void ask()}
-              disabled={loading || !question.trim()}
+              disabled={loading || !settingsLoaded || !question.trim()}
               aria-label="Send question"
               title="Send (Enter)"
             >

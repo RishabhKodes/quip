@@ -18,7 +18,7 @@ export const DEFAULT_SETTINGS: QuipSettings = {
   apiUrl: DEFAULT_API_URL,
   quipApiKey: "",
   contextMode: "full",
-  useOwnKey: true,
+  useOwnKey: false,
   provider: "openai",
   model: "",
   llmApiKey: "",
@@ -33,10 +33,22 @@ export function getStoredSettings(): Promise<QuipSettings> {
     }
 
     chrome.storage.local.get(STORAGE_KEYS.settings, (result) => {
-      resolve({
+      const settings: QuipSettings = {
         ...DEFAULT_SETTINGS,
         ...(result[STORAGE_KEYS.settings] || {}),
-      });
+      };
+
+      // Older defaults selected a browser provider without a key. Let those
+      // incomplete setups use the server's environment configuration instead.
+      if (
+        settings.useOwnKey &&
+        settings.provider !== "local" &&
+        !settings.llmApiKey.trim()
+      ) {
+        settings.useOwnKey = false;
+      }
+
+      resolve(settings);
     });
   });
 }

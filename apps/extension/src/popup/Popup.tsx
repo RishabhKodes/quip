@@ -46,7 +46,9 @@ function Popup() {
       settings.provider !== "local" &&
       !settings.llmApiKey.trim()
     ) {
-      setError("Your provider API key is required.");
+      setError(
+        "Add a provider key here, or choose Self-hosted server to use your .env key.",
+      );
       return;
     }
     if (
@@ -147,7 +149,7 @@ function Popup() {
             <small>
               {settings.useOwnKey
                 ? resolvedModel
-                : "Uses the provider configured on your quip API"}
+                : "Uses the provider and API key from your server’s .env"}
             </small>
           </div>
         </section>
@@ -173,7 +175,7 @@ function Popup() {
               </span>
               <span>
                 <strong>Self-hosted server</strong>
-                <small>Your server’s provider settings</small>
+                <small>Use the API key in your server’s .env</small>
               </span>
             </button>
             <button
@@ -188,7 +190,7 @@ function Popup() {
               </span>
               <span>
                 <strong>Own provider</strong>
-                <small>Cloud API or local model</small>
+                <small>Enter a separate API key or use a local model</small>
               </span>
             </button>
           </div>

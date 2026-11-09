@@ -104,7 +104,12 @@ The default Quip API URL is `http://localhost:3000`. Open the extension, expand
 
 ### 5. Choose a model
 
-New installations default to **Own provider**. Open the extension settings and choose a connection:
+New installations default to **Self-hosted server**, so the API uses the key in
+your `.env` without asking you to enter it again in the extension. Older saved
+cloud-provider setups with an empty browser key also use the server configuration.
+Existing browser keys and local-model settings are preserved.
+
+Open the extension settings to choose a connection:
 
 - **Self-hosted server** uses the provider and key configured in your API’s `.env`.
   Existing server-mode settings continue to work, with no Quip request quota.
