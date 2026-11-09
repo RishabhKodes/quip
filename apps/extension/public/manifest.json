@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Quip - Quick Page AI",
+  "name": "quip - page AI",
   "description": "Ask AI quick questions about selected text and webpage context.",
   "version": "0.1.0",
   "icons": {
@@ -31,7 +31,7 @@
   },
   "options_page": "popup.html",
   "action": {
-    "default_title": "Quip - Quick Page AI",
+    "default_title": "quip - page AI",
     "default_popup": "popup.html"
   }
 }

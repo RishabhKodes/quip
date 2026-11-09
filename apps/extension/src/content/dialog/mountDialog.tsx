@@ -20,7 +20,7 @@ export function mountQuickAskDialog(props: MountProps) {
   // capture listeners. A separate document keeps page shortcuts out of Quip.
   const host = document.createElement("iframe");
   host.id = HOST_ID;
-  host.title = "Quip";
+  host.title = "quip";
   host.style.position = "fixed";
   host.style.top = "0";
   host.style.left = "0";
@@ -36,7 +36,7 @@ export function mountQuickAskDialog(props: MountProps) {
     host.remove();
     return;
   }
-  dialogDocument.title = "Quip";
+  dialogDocument.title = "quip";
 
   const container = dialogDocument.createElement("div");
   dialogDocument.body.appendChild(container);

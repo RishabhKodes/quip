@@ -110,7 +110,7 @@ export function QuickAskDialog({
       settings.provider !== "local" &&
       !settings.llmApiKey.trim()
     ) {
-      setError("Add your provider API key in Quip settings to continue.");
+      setError("Add your provider API key in quip settings to continue.");
       return;
     }
     if (
@@ -212,7 +212,7 @@ export function QuickAskDialog({
         const errorBody = parseJsonObject(response.body);
         throw new Error(
           (typeof errorBody.error === "string" && errorBody.error) ||
-            `Quip could not complete the request (${response.status}).`,
+            `quip could not complete the request (${response.status}).`,
         );
       }
 
@@ -257,7 +257,7 @@ export function QuickAskDialog({
       setCopiedMessage(index);
       window.setTimeout(() => setCopiedMessage(null), 1400);
     } catch {
-      setError("Quip could not access the clipboard.");
+      setError("quip could not access the clipboard.");
     }
   }
 
@@ -305,7 +305,7 @@ export function QuickAskDialog({
         className="quip-dialog"
         role="dialog"
         aria-modal="true"
-        aria-label="Ask Quip about this page"
+        aria-label="Ask quip about this page"
         onMouseDown={(event) => event.stopPropagation()}
       >
         <header className="quip-header">
@@ -314,7 +314,7 @@ export function QuickAskDialog({
               q
             </span>
             <span>
-              <strong>Quip</strong>
+              <strong>quip</strong>
               <small>Ask the page</small>
             </span>
           </div>
@@ -346,7 +346,7 @@ export function QuickAskDialog({
               className="quip-icon-button"
               onClick={onClose}
               title="Close (Esc)"
-              aria-label="Close Quip"
+              aria-label="Close quip"
             >
               <svg viewBox="0 0 24 24">
                 <path d="m6 6 12 12M18 6 6 18" />
@@ -448,7 +448,7 @@ export function QuickAskDialog({
                   ))
                 ) : (
                   <p className="quip-context-empty">
-                    No structured sections were available; Quip will use the
+                    No structured sections were available; quip will use the
                     fallback page text.
                   </p>
                 )}
@@ -470,12 +470,12 @@ export function QuickAskDialog({
               <h2>
                 {selectedText
                   ? "What would you like to know?"
-                  : "Explore this page with Quip"}
+                  : "Explore this page with quip"}
               </h2>
               <p>
                 {selectedText
                   ? "Ask for a summary, explanation, rewrite, or anything else."
-                  : "Ask a focused question and Quip will use the page as context."}
+                  : "Ask a focused question and quip will use the page as context."}
               </p>
               <div className="quip-prompt-grid">
                 {prompts.map((prompt) => (
@@ -501,12 +501,12 @@ export function QuickAskDialog({
                     <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 8a7 7 0 0 0-14 0" />
                   </svg>
                 ) : (
-                  <span>Q</span>
+                  <span>q</span>
                 )}
               </div>
               <div className="quip-message-body">
                 <div className="quip-message-meta">
-                  <strong>{entry.role === "user" ? "You" : "Quip"}</strong>
+                  <strong>{entry.role === "user" ? "You" : "quip"}</strong>
                   {entry.role === "assistant" && (
                     <button
                       onClick={() => void copyAnswer(entry.content, index)}
@@ -563,11 +563,11 @@ export function QuickAskDialog({
           {currentPrompt && (loading || streamingAnswer) && (
             <article className="quip-message quip-message-assistant">
               <div className="quip-message-avatar">
-                <span>Q</span>
+                <span>q</span>
               </div>
               <div className="quip-message-body">
                 <div className="quip-message-meta">
-                  <strong>Quip</strong>
+                  <strong>quip</strong>
                   {loading && <span className="quip-thinking">Thinking</span>}
                 </div>
                 {streamingAnswer ? (
@@ -578,7 +578,7 @@ export function QuickAskDialog({
                     }}
                   />
                 ) : (
-                  <div className="quip-typing" aria-label="Quip is thinking">
+                  <div className="quip-typing" aria-label="quip is thinking">
                     <span />
                     <span />
                     <span />
@@ -616,7 +616,7 @@ export function QuickAskDialog({
               }
               rows={1}
               disabled={loading}
-              aria-label="Question for Quip"
+              aria-label="Ask quip"
             />
             <button
               className="quip-send-button"

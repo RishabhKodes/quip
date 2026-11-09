@@ -562,8 +562,9 @@ export function getDialogStyles(): string {
     }
 
     .quip-message-avatar span {
-      font-size: 13px;
+      font-size: 20px;
       font-weight: 600;
+      line-height: 1;
     }
 
     .quip-message-body {

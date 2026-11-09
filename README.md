@@ -142,9 +142,9 @@ place, and save the settings.
 
 Open a normal `http://` or `https://` page and use any of these entry points:
 
-- Select text, right-click, and choose **Ask Quip about this**.
+- Select text, right-click, and choose **Ask quip about this**.
 - Select text and press `Command+K` or `Ctrl+K`.
-- Open the extension and select **Open Quip**.
+- Open the extension and select **Open quip**.
 
 Type a question and press `Enter`. Use `Shift+Enter` for a new line and `Esc`
 to close the dialog. **Context details** shows the extracted payload and, after

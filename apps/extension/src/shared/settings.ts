@@ -55,11 +55,11 @@ export function validateApiUrl(apiUrl: string): string | null {
   try {
     url = new URL(apiUrl.trim());
   } catch {
-    return "Enter a valid Quip API URL.";
+    return "Enter a valid quip API URL.";
   }
 
   if (url.username || url.password) {
-    return "The Quip API URL cannot contain embedded credentials.";
+    return "The quip API URL cannot contain embedded credentials.";
   }
 
   const isLocalhost =
@@ -68,7 +68,7 @@ export function validateApiUrl(apiUrl: string): string | null {
     url.hostname === "[::1]";
 
   if (url.protocol !== "https:" && !(url.protocol === "http:" && isLocalhost)) {
-    return "Use HTTPS for remote Quip API servers.";
+    return "Use HTTPS for remote quip API servers.";
   }
 
   return null;
