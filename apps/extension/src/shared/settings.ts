@@ -18,7 +18,7 @@ export const DEFAULT_SETTINGS: QuipSettings = {
   apiUrl: DEFAULT_API_URL,
   quipApiKey: "",
   contextMode: "full",
-  useOwnKey: true,
+  useOwnKey: false,
   provider: "openai",
   model: "",
   llmApiKey: "",
@@ -33,10 +33,22 @@ export function getStoredSettings(): Promise<QuipSettings> {
     }
 
     chrome.storage.local.get(STORAGE_KEYS.settings, (result) => {
-      resolve({
+      const settings: QuipSettings = {
         ...DEFAULT_SETTINGS,
         ...(result[STORAGE_KEYS.settings] || {}),
-      });
+      };
+
+      // Older defaults selected a browser provider without a key. Let those
+      // incomplete setups use the server's environment configuration instead.
+      if (
+        settings.useOwnKey &&
+        settings.provider !== "local" &&
+        !settings.llmApiKey.trim()
+      ) {
+        settings.useOwnKey = false;
+      }
+
+      resolve(settings);
     });
   });
 }
@@ -55,11 +67,11 @@ export function validateApiUrl(apiUrl: string): string | null {
   try {
     url = new URL(apiUrl.trim());
   } catch {
-    return "Enter a valid Quip API URL.";
+    return "Enter a valid quip API URL.";
   }
 
   if (url.username || url.password) {
-    return "The Quip API URL cannot contain embedded credentials.";
+    return "The quip API URL cannot contain embedded credentials.";
   }
 
   const isLocalhost =
@@ -68,7 +80,7 @@ export function validateApiUrl(apiUrl: string): string | null {
     url.hostname === "[::1]";
 
   if (url.protocol !== "https:" && !(url.protocol === "http:" && isLocalhost)) {
-    return "Use HTTPS for remote Quip API servers.";
+    return "Use HTTPS for remote quip API servers.";
   }
 
   return null;

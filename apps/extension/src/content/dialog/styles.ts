@@ -74,8 +74,8 @@ export function getDialogStyles(): string {
       flex: 0 0 auto;
       align-items: center;
       justify-content: space-between;
-      min-height: 62px;
-      padding: 13px 18px;
+      min-height: 54px;
+      padding: 10px 18px;
       border-bottom: 1px solid var(--ui);
       background: var(--paper);
     }
@@ -84,8 +84,7 @@ export function getDialogStyles(): string {
     .quip-header-actions,
     .quip-context-summary,
     .quip-message,
-    .quip-message-meta,
-    .quip-composer-footer {
+    .quip-message-meta {
       display: flex;
       align-items: center;
     }
@@ -105,12 +104,6 @@ export function getDialogStyles(): string {
       line-height: 1;
     }
 
-    .quip-brand > span:last-child {
-      display: flex;
-      flex-direction: column;
-      line-height: 1.2;
-    }
-
     .quip-brand strong {
       color: var(--ink);
       font-size: 14px;
@@ -118,52 +111,15 @@ export function getDialogStyles(): string {
       letter-spacing: -.01em;
     }
 
-    .quip-brand small {
-      margin-top: 2px;
-      color: var(--muted);
-      font-size: 10px;
-    }
-
     .quip-header-actions {
       gap: 6px;
     }
 
-    .quip-model-pill,
     .quip-icon-button,
-    .quip-context-details-button,
     .quip-message-meta button,
-    .quip-error button,
-    .quip-composer-footer button {
+    .quip-error button {
       border: 0;
       cursor: pointer;
-    }
-
-    .quip-model-pill {
-      display: flex;
-      align-items: center;
-      max-width: 250px;
-      gap: 7px;
-      overflow: hidden;
-      padding: 4px 0;
-      border-bottom: 1px solid var(--ui-active);
-      background: transparent;
-      color: var(--muted);
-      font-size: 10px;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .quip-model-pill:hover {
-      border-color: var(--action);
-      color: var(--action);
-    }
-
-    .quip-status-dot {
-      flex: 0 0 auto;
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--action);
     }
 
     .quip-icon-button {
@@ -177,19 +133,23 @@ export function getDialogStyles(): string {
       color: var(--muted);
     }
 
-    .quip-icon-button:hover {
+    .quip-icon-button:hover:not(:disabled) {
       background: var(--paper-secondary);
       color: var(--action);
     }
 
-    .quip-model-pill:focus-visible,
+    .quip-icon-button:disabled {
+      cursor: not-allowed;
+      opacity: .35;
+    }
+
     .quip-icon-button:focus-visible,
-    .quip-context-details-button:focus-visible,
+    .quip-context-summary:focus-visible,
+    .quip-context-payload summary:focus-visible,
     .quip-prompt-grid button:focus-visible,
     .quip-message-meta button:focus-visible,
     .quip-error button:focus-visible,
-    .quip-send-button:focus-visible,
-    .quip-composer-footer button:focus-visible {
+    .quip-send-button:focus-visible {
       outline: 2px solid var(--action);
       outline-offset: 2px;
     }
@@ -197,7 +157,6 @@ export function getDialogStyles(): string {
     .quip-icon-button svg,
     .quip-context-icon svg,
     .quip-chevron,
-    .quip-prompt-grid svg,
     .quip-message-avatar svg,
     .quip-message-meta button svg,
     .quip-error-icon svg,
@@ -214,35 +173,33 @@ export function getDialogStyles(): string {
     }
 
     .quip-context-bar {
-      display: flex;
       flex: 0 0 auto;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 10px 18px;
+      padding: 0 18px;
       border-bottom: 1px solid var(--ui);
-      background: var(--paper-secondary);
     }
 
     .quip-context-summary {
+      width: 100%;
       min-width: 0;
-      gap: 9px;
-      padding: 0;
+      min-height: 38px;
+      gap: 8px;
+      padding: 7px 0;
       border: 0;
       background: transparent;
-      color: inherit;
+      color: var(--muted);
+      cursor: pointer;
       text-align: left;
     }
 
-    .quip-context-summary:not(:disabled) {
-      cursor: pointer;
+    .quip-context-summary:hover {
+      color: var(--action);
     }
 
     .quip-context-icon {
       display: grid;
       flex: 0 0 auto;
-      width: 25px;
-      height: 25px;
+      width: 18px;
+      height: 18px;
       place-items: center;
       color: var(--action);
     }
@@ -252,29 +209,21 @@ export function getDialogStyles(): string {
     }
 
     .quip-context-copy {
-      display: flex;
       min-width: 0;
-      flex-direction: column;
-      line-height: 1.25;
-    }
-
-    .quip-context-copy strong {
-      color: var(--ink);
-      font-size: 10px;
-      font-weight: 550;
-    }
-
-    .quip-context-copy span {
-      max-width: 420px;
-      margin-top: 2px;
+      flex: 1;
       overflow: hidden;
-      color: var(--muted);
-      font-size: 9px;
+      font-size: 11px;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
+    .quip-context-label {
+      flex: 0 0 auto;
+      font-size: 10px;
+    }
+
     .quip-chevron {
+      flex: 0 0 auto;
       width: 13px;
       color: var(--muted);
       transition: transform 160ms;
@@ -284,34 +233,20 @@ export function getDialogStyles(): string {
       transform: rotate(90deg);
     }
 
-    .quip-context-details-button {
-      flex: 0 0 auto;
-      padding: 3px 0;
-      border-bottom: 1px solid var(--ui-active);
-      background: transparent;
-      color: var(--muted);
-      font-size: 9px;
-    }
-
-    .quip-context-details-button:hover {
-      border-color: var(--action);
-      color: var(--action);
-    }
-
     .quip-context-panel {
       display: grid;
       flex: 0 0 auto;
       gap: 16px;
-      max-height: 290px;
+      max-height: min(240px, 35vh);
       overflow-y: auto;
+      overflow-wrap: anywhere;
       padding: 16px 18px 18px;
       border-bottom: 1px solid var(--ui);
       background: var(--paper-secondary);
       animation: quip-panel-in 150ms ease-out;
     }
 
-    .quip-eyebrow,
-    .quip-context-grid span {
+    .quip-eyebrow {
       color: var(--muted);
       font-size: 9px;
       font-weight: 500;
@@ -325,36 +260,6 @@ export function getDialogStyles(): string {
       font-size: 11px;
       line-height: 1.55;
       white-space: pre-wrap;
-    }
-
-    .quip-context-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      border-top: 1px solid var(--ui);
-      border-bottom: 1px solid var(--ui);
-    }
-
-    .quip-context-grid > div {
-      display: flex;
-      min-width: 0;
-      flex-direction: column;
-      gap: 3px;
-      padding: 9px 10px;
-      border-right: 1px solid var(--ui);
-    }
-
-    .quip-context-grid > div:last-child {
-      border-right: 0;
-    }
-
-    .quip-context-grid strong {
-      overflow: hidden;
-      color: var(--ink);
-      font-size: 10px;
-      font-variant-numeric: tabular-nums;
-      font-weight: 500;
-      text-overflow: ellipsis;
-      white-space: nowrap;
     }
 
     .quip-context-preview {
@@ -420,7 +325,7 @@ export function getDialogStyles(): string {
     }
 
     .quip-chat {
-      min-height: 250px;
+      min-height: 0;
       flex: 1 1 auto;
       overflow-y: auto;
       overscroll-behavior: contain;
@@ -430,48 +335,11 @@ export function getDialogStyles(): string {
 
     .quip-empty-state {
       display: flex;
-      min-height: 300px;
+      min-height: 240px;
       align-items: flex-start;
       justify-content: center;
       flex-direction: column;
       text-align: left;
-    }
-
-    .quip-empty-orb {
-      position: relative;
-      display: grid;
-      width: 28px;
-      height: 28px;
-      margin-bottom: 14px;
-      place-items: center;
-    }
-
-    .quip-empty-orb::after,
-    .quip-empty-orb::before,
-    .quip-empty-orb span {
-      position: absolute;
-      content: "";
-      background: var(--action);
-    }
-
-    .quip-empty-orb::before {
-      width: 22px;
-      height: 1px;
-      transform: rotate(45deg);
-    }
-
-    .quip-empty-orb::after {
-      width: 1px;
-      height: 22px;
-      transform: rotate(45deg);
-    }
-
-    .quip-empty-orb span {
-      top: 1px;
-      right: 1px;
-      width: 4px;
-      height: 4px;
-      border-radius: 50%;
     }
 
     .quip-empty-state h2 {
@@ -483,53 +351,29 @@ export function getDialogStyles(): string {
       line-height: 1.25;
     }
 
-    .quip-empty-state > p {
-      max-width: 470px;
-      margin: 7px 0 22px;
-      color: var(--muted);
-      font-size: 12px;
-    }
-
     .quip-prompt-grid {
-      display: grid;
-      width: min(100%, 520px);
-      border-top: 1px solid var(--ui);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 20px;
     }
 
     .quip-prompt-grid button {
-      display: flex;
-      min-height: 42px;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 9px 2px;
-      border: 0;
-      border-bottom: 1px solid var(--ui);
+      min-height: 32px;
+      padding: 6px 10px;
+      border: 1px solid var(--ui);
+      border-radius: 4px;
       background: transparent;
-      color: var(--ink);
+      color: var(--muted);
       cursor: pointer;
       font-size: 11px;
       text-align: left;
     }
 
     .quip-prompt-grid button:hover {
+      border-color: var(--ui-active);
+      background: var(--paper-secondary);
       color: var(--action);
-    }
-
-    .quip-prompt-grid button span {
-      text-decoration: underline;
-      text-decoration-color: var(--ui-active);
-      text-underline-offset: 3px;
-    }
-
-    .quip-prompt-grid button:hover span {
-      text-decoration-color: var(--action);
-    }
-
-    .quip-prompt-grid svg {
-      flex: 0 0 auto;
-      width: 13px;
-      color: var(--muted);
     }
 
     .quip-message {
@@ -540,8 +384,6 @@ export function getDialogStyles(): string {
 
     .quip-message + .quip-message {
       margin-top: 24px;
-      padding-top: 24px;
-      border-top: 1px solid var(--ui);
     }
 
     .quip-message-avatar {
@@ -562,8 +404,9 @@ export function getDialogStyles(): string {
     }
 
     .quip-message-avatar span {
-      font-size: 13px;
+      font-size: 20px;
       font-weight: 600;
+      line-height: 1;
     }
 
     .quip-message-body {
@@ -588,34 +431,24 @@ export function getDialogStyles(): string {
     }
 
     .quip-message-meta button {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      padding: 3px 0;
-      border-bottom: 1px solid transparent;
+      display: grid;
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      place-items: center;
+      border-radius: 3px;
       background: transparent;
       color: var(--muted);
       font-size: 9px;
     }
 
     .quip-message-meta button:hover {
-      border-color: var(--action);
+      background: var(--paper-secondary);
       color: var(--action);
     }
 
     .quip-message-meta button svg {
       width: 12px;
-    }
-
-    .quip-thinking {
-      margin-left: auto;
-      color: var(--muted);
-      font-size: 9px;
-    }
-
-    .quip-thinking::after {
-      content: "...";
-      animation: quip-thinking 1.2s steps(4, end) infinite;
     }
 
     .quip-message-content {
@@ -782,7 +615,7 @@ export function getDialogStyles(): string {
 
     .quip-composer-wrap {
       flex: 0 0 auto;
-      padding: 13px 18px 12px;
+      padding: 12px 18px 16px;
       border-top: 1px solid var(--ui);
       background: var(--paper);
     }
@@ -802,6 +635,7 @@ export function getDialogStyles(): string {
     }
 
     .quip-composer textarea {
+      min-width: 0;
       min-height: 31px;
       max-height: 132px;
       flex: 1;
@@ -862,40 +696,6 @@ export function getDialogStyles(): string {
       animation: quip-spin .7s linear infinite;
     }
 
-    .quip-composer-footer {
-      justify-content: space-between;
-      margin-top: 8px;
-      color: var(--muted);
-      font-size: 9px;
-    }
-
-    .quip-composer-footer kbd {
-      padding: 1px 3px;
-      border: 1px solid var(--ui-active);
-      border-radius: 3px;
-      background: var(--paper-secondary);
-      color: var(--muted);
-      font-family: inherit;
-    }
-
-    .quip-composer-footer i {
-      margin: 0 3px;
-      font-style: normal;
-    }
-
-    .quip-composer-footer button {
-      padding: 2px 0;
-      border-bottom: 1px solid transparent;
-      background: transparent;
-      color: var(--muted);
-      font-size: 9px;
-    }
-
-    .quip-composer-footer button:hover {
-      border-color: var(--action);
-      color: var(--action);
-    }
-
     .quip-chat::-webkit-scrollbar,
     .quip-context-panel::-webkit-scrollbar,
     .quip-selection-preview::-webkit-scrollbar,
@@ -941,11 +741,6 @@ export function getDialogStyles(): string {
     @keyframes quip-bounce {
       0%, 60%, 100% { transform: translateY(0); opacity: .35; }
       30% { transform: translateY(-4px); opacity: 1; }
-    }
-
-    @keyframes quip-thinking {
-      0% { clip-path: inset(0 100% 0 0); }
-      100% { clip-path: inset(0 0 0 0); }
     }
 
     @keyframes quip-spin {
@@ -997,10 +792,6 @@ export function getDialogStyles(): string {
         padding-left: 13px;
       }
 
-      .quip-model-pill {
-        max-width: 116px;
-      }
-
       .quip-context-bar,
       .quip-composer-wrap {
         padding-right: 13px;
@@ -1010,18 +801,6 @@ export function getDialogStyles(): string {
       .quip-chat {
         padding-right: 16px;
         padding-left: 16px;
-      }
-
-      .quip-context-grid {
-        grid-template-columns: 1fr 1fr;
-      }
-
-      .quip-context-grid > div:nth-child(2) {
-        border-right: 0;
-      }
-
-      .quip-context-grid > div:nth-child(-n + 2) {
-        border-bottom: 1px solid var(--ui);
       }
 
       .quip-empty-state h2 {

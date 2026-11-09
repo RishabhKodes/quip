@@ -104,7 +104,12 @@ The default Quip API URL is `http://localhost:3000`. Open the extension, expand
 
 ### 5. Choose a model
 
-New installations default to **Own provider**. Open the extension settings and choose a connection:
+New installations default to **Self-hosted server**, so the API uses the key in
+your `.env` without asking you to enter it again in the extension. Older saved
+cloud-provider setups with an empty browser key also use the server configuration.
+Existing browser keys and local-model settings are preserved.
+
+Open the extension settings to choose a connection:
 
 - **Self-hosted server** uses the provider and key configured in your API’s `.env`.
   Existing server-mode settings continue to work, with no Quip request quota.
@@ -142,13 +147,14 @@ place, and save the settings.
 
 Open a normal `http://` or `https://` page and use any of these entry points:
 
-- Select text, right-click, and choose **Ask Quip about this**.
+- Select text, right-click, and choose **Ask quip about this**.
 - Select text and press `Command+K` or `Ctrl+K`.
-- Open the extension and select **Open Quip**.
+- Open the extension and select **Open quip**.
 
 Type a question and press `Enter`. Use `Shift+Enter` for a new line and `Esc`
-to close the dialog. **Context details** shows the extracted payload and, after
-a request, the page sections selected for that question.
+to close the dialog. Click the page title above the chat to inspect the selected
+text and page sections. After a request, this shows the sections sent for that
+question. The settings icon in the header opens model settings.
 
 ## Development Workflow
 

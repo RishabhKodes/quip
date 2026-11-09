@@ -16,24 +16,37 @@ interface MountProps {
 export function mountQuickAskDialog(props: MountProps) {
   unmountQuickAskDialog();
 
-  const host = document.createElement("div");
+  // Shadow DOM isolates styles, but keyboard events still reach the page's
+  // capture listeners. A separate document keeps page shortcuts out of Quip.
+  const host = document.createElement("iframe");
   host.id = HOST_ID;
+  host.title = "quip";
   host.style.position = "fixed";
   host.style.top = "0";
   host.style.left = "0";
   host.style.width = "100vw";
   host.style.height = "100vh";
   host.style.zIndex = "2147483647";
-  host.style.pointerEvents = "none";
+  host.style.border = "0";
+  host.style.colorScheme = "light";
   document.documentElement.appendChild(host);
 
-  const shadow = host.attachShadow({ mode: "open" });
+  const dialogDocument = host.contentDocument;
+  if (!dialogDocument) {
+    host.remove();
+    return;
+  }
+  dialogDocument.title = "quip";
 
-  const styleEl = document.createElement("style");
+  const container = dialogDocument.createElement("div");
+  dialogDocument.body.appendChild(container);
+  const shadow = container.attachShadow({ mode: "open" });
+
+  const styleEl = dialogDocument.createElement("style");
   styleEl.textContent = getDialogStyles();
   shadow.appendChild(styleEl);
 
-  const app = document.createElement("div");
+  const app = dialogDocument.createElement("div");
   app.style.pointerEvents = "auto";
   shadow.appendChild(app);
 

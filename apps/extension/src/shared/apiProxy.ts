@@ -16,7 +16,7 @@ export async function proxyApiRequest(
   } satisfies QuipApiProxyRequest)) as QuipApiProxyResponse | undefined;
 
   if (!response) {
-    throw new Error("The Quip extension service worker did not respond.");
+    throw new Error("The quip extension service worker did not respond.");
   }
   if (response.networkError) throw new Error(response.networkError);
   return response;
@@ -49,7 +49,7 @@ export function proxyApiStream(
         completed = true;
         port.disconnect();
         if (!response) {
-          reject(new Error("The Quip API returned no response metadata."));
+          reject(new Error("The quip API returned no response metadata."));
           return;
         }
         resolve({ ...response, body });
@@ -58,7 +58,7 @@ export function proxyApiStream(
 
     port.onDisconnect.addListener(() => {
       if (!completed) {
-        reject(new Error("The Quip API connection closed unexpectedly."));
+        reject(new Error("The quip API connection closed unexpectedly."));
       }
     });
 

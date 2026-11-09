@@ -12,7 +12,7 @@ chrome.runtime.onInstalled.addListener(async () => {
   await chrome.contextMenus.removeAll();
   chrome.contextMenus.create({
     id: "ask-ai-selection",
-    title: "Ask Quip about this",
+    title: "Ask quip about this",
     contexts: ["selection"],
   });
 });
@@ -209,10 +209,10 @@ function getConnectionError(value: string): string {
       url.hostname === "127.0.0.1" ||
       url.hostname === "[::1]";
     if (isLocal) {
-      return `Could not reach the Quip API at ${url.origin}. Start it with \`pnpm dev:api\` and verify the API URL in settings.`;
+      return `Could not reach the quip API at ${url.origin}. Start it with \`pnpm dev:api\` and verify the API URL in settings.`;
     }
   } catch {
     // The URL validator in the UI will provide the specific format error.
   }
-  return "Could not reach the Quip API. Verify the API URL and network connection.";
+  return "Could not reach the quip API. Verify the API URL and network connection.";
 }

@@ -46,7 +46,9 @@ function Popup() {
       settings.provider !== "local" &&
       !settings.llmApiKey.trim()
     ) {
-      setError("Your provider API key is required.");
+      setError(
+        "Add a provider key here, or choose Self-hosted server to use your .env key.",
+      );
       return;
     }
     if (
@@ -89,7 +91,7 @@ function Popup() {
       }
       window.close();
     } catch {
-      setError("Quip cannot open on this page. Try a regular website tab.");
+      setError("quip cannot open on this page. Try a regular website tab.");
     } finally {
       setOpening(false);
     }
@@ -120,8 +122,8 @@ function Popup() {
             q
           </span>
           <span>
-            <strong>Quip</strong>
-            <small>Quick page intelligence</small>
+            <strong>quip</strong>
+            <small>Page intelligence</small>
           </span>
         </div>
         <button
@@ -129,7 +131,7 @@ function Popup() {
           onClick={() => void openQuip()}
           disabled={opening}
         >
-          {opening ? "Opening..." : "Open Quip"}
+          {opening ? "Opening..." : "Open quip"}
           <kbd>⌘K</kbd>
         </button>
       </header>
@@ -147,7 +149,7 @@ function Popup() {
             <small>
               {settings.useOwnKey
                 ? resolvedModel
-                : "Uses the provider configured on your Quip API"}
+                : "Uses the provider and API key from your server’s .env"}
             </small>
           </div>
         </section>
@@ -156,7 +158,7 @@ function Popup() {
           <div className="popup-section-heading">
             <span>
               <small>AI connection</small>
-              <h2>Choose how Quip answers</h2>
+              <h2>Choose how quip answers</h2>
             </span>
           </div>
 
@@ -173,7 +175,7 @@ function Popup() {
               </span>
               <span>
                 <strong>Self-hosted server</strong>
-                <small>Your server’s provider settings</small>
+                <small>Use the API key in your server’s .env</small>
               </span>
             </button>
             <button
@@ -188,7 +190,7 @@ function Popup() {
               </span>
               <span>
                 <strong>Own provider</strong>
-                <small>Cloud API or local model</small>
+                <small>Enter a separate API key or use a local model</small>
               </span>
             </button>
           </div>
@@ -260,7 +262,7 @@ function Popup() {
                   />
                   <small>
                     OpenAI-compatible and loopback-only. The model must run on
-                    the Quip API host.
+                    the quip API host.
                   </small>
                 </label>
               ) : (
@@ -297,7 +299,7 @@ function Popup() {
                   </div>
                   <small>
                     Use a provider API key. Claude Code and Codex subscription
-                    sign-in are not connected to Quip.
+                    sign-in are not connected to quip.
                   </small>
                 </label>
               )}
@@ -309,8 +311,8 @@ function Popup() {
                 </svg>
                 <span>
                   {settings.provider === "local"
-                    ? "Local requests stay between your Quip API and the loopback model endpoint."
-                    : "Stored only in this browser. Your key passes through your Quip API for each request and is never persisted there."}
+                    ? "Local requests stay between your quip API and the loopback model endpoint."
+                    : "Stored only in this browser. Your key passes through your quip API for each request and is never persisted there."}
                 </span>
               </div>
             </div>
@@ -321,7 +323,7 @@ function Popup() {
           <div className="popup-section-heading">
             <span>
               <small>Page context</small>
-              <h2>Control what Quip can read</h2>
+              <h2>Control what quip can read</h2>
             </span>
           </div>
 
@@ -357,7 +359,7 @@ function Popup() {
           </summary>
           <div className="popup-advanced-content">
             <label className="popup-field">
-              <span>Quip API URL</span>
+              <span>quip API URL</span>
               <input
                 type="url"
                 value={settings.apiUrl}
@@ -370,7 +372,7 @@ function Popup() {
             </label>
             <label className="popup-field">
               <span>
-                Quip server key <i>Optional</i>
+                quip server key <i>Optional</i>
               </span>
               <input
                 type="password"
